@@ -1,0 +1,19 @@
+{
+  "name": "clinicflow",
+  "version": "1.0.0",
+  "description": "ClinicFlow \u2013 clinic booking and patient flow (Call 4 Action, GNG1103). Firebase + Gmail + Clio AI.",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js",
+    "reset": "node server/server.js --reset",
+    "single-file": "node tools/build-single-file.js"
+  },
+  "engines": {
+    "node": ">=22.5"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "firebase-admin": "^14.5.1",
+    "nodemailer": "^7.0.11"
+  }
+}
