@@ -1,0 +1,303 @@
+/* ClinicFlow – legal documents (English and French versions are equally authoritative).
+   {email} = privacy contact, {updated} = version date. Lines starting with "• " are bullet points.
+   IMPORTANT: these documents were drafted for a university prototype. Have them reviewed by a lawyer
+   before ClinicFlow is used with real patients in production. */
+window.LEGAL_VERSION = "2026-11-13";
+window.LEGAL = {
+  // =====================================================================================================
+  terms: {
+    en: { title: "Terms of Use", intro: "Please read these Terms carefully. By selecting “I accept” or by using ClinicFlow, you agree to them. If you do not agree, do not use ClinicFlow.",
+      sections: [
+        ["1. Who we are", ["ClinicFlow (the “Service”) is a web-based appointment booking and patient-flow prototype developed by Call 4 Action, a student design team at the University of Ottawa (course GNG 1103) (“we”, “us”). These Terms of Use form a binding agreement between you and us. Our Privacy Policy and Cookie Policy are part of these Terms."]],
+        ["2. A prototype, provided as is", ["ClinicFlow is a student prototype created for educational and testing purposes. Features may change, be interrupted or be discontinued at any time, with or without notice. We do not guarantee that the Service will always be available, error-free or secure, or that information shown in it (such as availability or wait-time estimates) is complete or accurate."]],
+        ["3. Not for emergencies – not medical advice", [
+          "• ClinicFlow is NOT an emergency service. If you think you have a medical emergency, call 911 or go to the nearest emergency department immediately.",
+          "• For a mental-health crisis, call or text 988 (Suicide Crisis Helpline). For health advice, call Health811 (811) in Ontario or Info-Santé 811 in Quebec.",
+          "• ClinicFlow does not provide medical care, diagnosis, treatment or medical advice. All health care is provided by the clinics and practitioners you choose, who are solely responsible for it.",
+          "• Wait-time and “how busy is it” estimates are automatic predictions only. Actual times may be very different. Do not rely on them for decisions about your health."]],
+        ["4. Who can use ClinicFlow", [
+          "• You must be at least the age of majority in your province or territory (18 or 19) to create an account.",
+          "• A parent, legal guardian or authorized representative may book for a minor or another person through the family feature. By doing so, you confirm that you have the legal authority to act for that person and to share their information with the clinic.",
+          "• Clinic staff and administrators must also accept the Staff Confidentiality Agreement, and clinics must accept the Clinic Service Agreement."]],
+        ["5. Your account and security", [
+          "• Give true, current and complete information, and keep it up to date.",
+          "• Keep your password, your optional shared account password and your verification codes secret. You are responsible for activity under your account. If you share an account password with family members, you are responsible for choosing who knows it.",
+          "• Tell us right away at {email} if you think someone used your account without permission.",
+          "• Sign out when you use a shared or public computer."]],
+        ["6. Acceptable use", ["You agree not to:",
+          "• enter diagnoses, symptoms, prescriptions, test results or other clinical details in free-text fields (the reason note, forms or messages);",
+          "• make bookings you do not intend to keep, book in someone else's name without authority, or impersonate anyone;",
+          "• use the Service for urgent or emergency matters;",
+          "• access other people's information, test or bypass security, overload, scrape, reverse-engineer or disrupt the Service, or upload malicious code;",
+          "• use the Service for any unlawful, harassing, abusive or fraudulent purpose, or send spam or commercial messages through it."]],
+        ["7. Bookings, cancellations and the waitlist", [
+          "• Appointments are offered by each clinic. The clinic's own policies apply, including any cancellation, late-arrival or missed-appointment policy and any related fees, which are set and charged by the clinic, not by us.",
+          "• A clinic may need to cancel, move or change your appointment or practitioner. You will be notified in the app and, if you chose it, by email.",
+          "• You can cancel or change online until the clinic's limit (usually 24 hours before). After that, contact the clinic directly.",
+          "• Joining a waitlist does not guarantee an appointment. Spots are offered in order and may be given to the next person if not accepted."]],
+        ["8. Communications", ["By using the Service, you agree to receive transactional messages needed to provide it (verification codes, confirmations, reminders, changes, cancellations, waitlist offers and replies from your clinic), in the app and, if you chose it, by email. These are not marketing. ClinicFlow does not send advertising or promotional messages. Messages are not monitored 24/7: never use them for urgent matters."]],
+        ["9. The role of clinics", ["Clinics are independent health care organizations. Each clinic is responsible for its services, its staff, its schedule and the personal health information it controls as a health information custodian under Ontario's Personal Health Information Protection Act, 2004 (PHIPA) or similar laws. For appointment information, ClinicFlow acts only as a service provider on the clinic's behalf. We are not responsible for a clinic's acts, omissions, care, decisions or policies."]],
+        ["10. Privacy", ["How we collect, use, share and protect personal information is explained in our Privacy Policy. By accepting these Terms, you also confirm that you have read the Privacy Policy and Cookie Policy."]],
+        ["11. Intellectual property", ["The ClinicFlow software, design, text and logos belong to Call 4 Action and its members. We grant you a personal, revocable, non-exclusive, non-transferable licence to use the Service for its intended purpose. If you send us feedback, we may use it without any obligation to you."]],
+        ["12. Disclaimer of warranties", ["To the maximum extent permitted by law, the Service is provided “as is” and “as available”, without warranties of any kind, express or implied, including merchantability, fitness for a particular purpose, availability and non-infringement. Some consumer protection laws (including in Quebec) give you rights that cannot be excluded; nothing in these Terms limits those rights."]],
+        ["13. Limitation of liability", ["To the maximum extent permitted by law, we (including the team members and the University of Ottawa) are not liable for any indirect, incidental, special, consequential or punitive damages, or for any loss arising from: missed, delayed or cancelled appointments; service interruptions; inaccurate estimates or availability; the acts or omissions of clinics or practitioners; or unauthorized access caused by your failure to protect your credentials. Our total liability for any claim is limited to CAD $100. Nothing in these Terms excludes or limits liability that cannot be excluded or limited by law, such as liability for intentional or gross fault, or for bodily or moral injury caused to a consumer in Quebec."]],
+        ["14. Suspension and closing your account", ["We may suspend or close access that breaks these Terms or puts others at risk. You can delete your account at any time from Account → Privacy & data. Sections that by their nature should survive (for example 3, 12, 13 and 16) continue after your account is closed."]],
+        ["15. Changes to these Terms", ["We may update these Terms. The date of the current version is shown at the top. If we make important changes, we will ask you to accept the new version before you continue to use the Service."]],
+        ["16. Governing law and language", ["These Terms are governed by the laws of the Province of Ontario and the federal laws of Canada that apply there, and disputes go to the courts of Ontario, except where the consumer protection law of your province or territory gives you the right to apply its law or go to its courts. These Terms are available in English and French; both versions are equally valid. The parties have required that this agreement and related documents be drawn up in both English and French. Les parties ont exigé que la présente convention et les documents qui s'y rattachent soient rédigés en français et en anglais."]],
+        ["17. Contact", ["Questions about these Terms: {email}."]],
+      ] },
+    fr: { title: "Conditions d'utilisation", intro: "Veuillez lire attentivement les présentes conditions. En choisissant « J'accepte » ou en utilisant ClinicFlow, vous les acceptez. Si vous ne les acceptez pas, n'utilisez pas ClinicFlow.",
+      sections: [
+        ["1. Qui sommes-nous", ["ClinicFlow (le « Service ») est un prototype Web de prise de rendez-vous et de suivi des patients conçu par Call 4 Action, une équipe étudiante de conception de l'Université d'Ottawa (cours GNG 1103) (« nous »). Les présentes conditions d'utilisation constituent une entente qui vous lie à nous. Notre Politique de confidentialité et notre Politique relative aux témoins en font partie."]],
+        ["2. Un prototype offert tel quel", ["ClinicFlow est un prototype étudiant créé à des fins d'apprentissage et d'essai. Ses fonctions peuvent changer, être interrompues ou cesser en tout temps, avec ou sans préavis. Nous ne garantissons pas que le Service sera toujours disponible, exempt d'erreurs ou sécuritaire, ni que l'information qui y figure (comme les disponibilités ou les estimations d'attente) est complète ou exacte."]],
+        ["3. Pas pour les urgences – pas un avis médical", [
+          "• ClinicFlow N'EST PAS un service d'urgence. Si vous croyez avoir une urgence médicale, composez immédiatement le 911 ou rendez-vous à l'urgence la plus proche.",
+          "• En cas de crise de santé mentale, appelez ou textez le 988 (Ligne d'aide en cas de crise de suicide). Pour des conseils santé, composez le 811 (Santé811 en Ontario ou Info-Santé 811 au Québec).",
+          "• ClinicFlow ne fournit aucun soin, diagnostic, traitement ni avis médical. Tous les soins sont fournis par les cliniques et les praticiens que vous choisissez, qui en sont seuls responsables.",
+          "• Les estimations de temps d'attente et d'achalandage sont uniquement des prévisions automatiques. Les temps réels peuvent être très différents. Ne vous y fiez pas pour prendre des décisions concernant votre santé."]],
+        ["4. Qui peut utiliser ClinicFlow", [
+          "• Vous devez avoir atteint l'âge de la majorité dans votre province ou territoire (18 ou 19 ans) pour créer un compte.",
+          "• Un parent, un tuteur légal ou un représentant autorisé peut réserver pour une personne mineure ou une autre personne grâce à la fonction famille. Ce faisant, vous confirmez avoir le pouvoir légal d'agir pour cette personne et de communiquer ses renseignements à la clinique.",
+          "• Le personnel et les administrateurs des cliniques doivent aussi accepter l'Entente de confidentialité du personnel, et les cliniques doivent accepter l'Entente de service pour les cliniques."]],
+        ["5. Votre compte et sa sécurité", [
+          "• Fournissez des renseignements vrais, à jour et complets, et tenez-les à jour.",
+          "• Gardez secrets votre mot de passe, votre mot de passe de compte partagé facultatif et vos codes de vérification. Vous êtes responsable des activités effectuées dans votre compte. Si vous partagez un mot de passe de compte avec des membres de votre famille, il vous appartient de choisir qui le connaît.",
+          "• Avisez-nous sans tarder à {email} si vous croyez que quelqu'un a utilisé votre compte sans permission.",
+          "• Déconnectez-vous lorsque vous utilisez un ordinateur partagé ou public."]],
+        ["6. Utilisation acceptable", ["Vous vous engagez à ne pas :",
+          "• inscrire de diagnostics, symptômes, ordonnances, résultats d'examens ou autres détails cliniques dans les champs de texte libre (note sur le motif, formulaires ou messages);",
+          "• faire des réservations que vous n'avez pas l'intention d'honorer, réserver au nom d'une autre personne sans en avoir le pouvoir, ou vous faire passer pour quelqu'un d'autre;",
+          "• utiliser le Service pour des questions urgentes;",
+          "• accéder aux renseignements d'autrui, tester ou contourner la sécurité, surcharger, extraire des données, faire de l'ingénierie inverse ou perturber le Service, ou téléverser du code malveillant;",
+          "• utiliser le Service à des fins illégales, de harcèlement, abusives ou frauduleuses, ni pour envoyer des pourriels ou des messages commerciaux."]],
+        ["7. Réservations, annulations et liste d'attente", [
+          "• Les rendez-vous sont offerts par chaque clinique. Les politiques de la clinique s'appliquent, y compris toute politique d'annulation, de retard ou d'absence et les frais qui s'y rattachent, lesquels sont fixés et perçus par la clinique, et non par nous.",
+          "• Une clinique peut devoir annuler, déplacer ou modifier votre rendez-vous ou votre praticien. Vous en serez avisé dans l'application et, si vous l'avez choisi, par courriel.",
+          "• Vous pouvez annuler ou modifier en ligne jusqu'à la limite fixée par la clinique (habituellement 24 heures avant). Après ce délai, communiquez directement avec la clinique.",
+          "• L'inscription à une liste d'attente ne garantit pas un rendez-vous. Les places sont offertes dans l'ordre et peuvent être offertes à la personne suivante si elles ne sont pas acceptées."]],
+        ["8. Communications", ["En utilisant le Service, vous acceptez de recevoir les messages transactionnels nécessaires à sa prestation (codes de vérification, confirmations, rappels, modifications, annulations, offres de la liste d'attente et réponses de votre clinique), dans l'application et, si vous l'avez choisi, par courriel. Il ne s'agit pas de marketing. ClinicFlow n'envoie aucun message publicitaire ou promotionnel. Les messages ne sont pas surveillés en tout temps : ne les utilisez jamais pour des questions urgentes."]],
+        ["9. Le rôle des cliniques", ["Les cliniques sont des organisations de soins de santé indépendantes. Chaque clinique est responsable de ses services, de son personnel, de son horaire et des renseignements personnels sur la santé qu'elle contrôle à titre de dépositaire de renseignements sur la santé au sens de la Loi de 2004 sur la protection des renseignements personnels sur la santé de l'Ontario (LPRPS) ou de lois semblables. Pour les renseignements sur les rendez-vous, ClinicFlow agit uniquement comme fournisseur de services pour le compte de la clinique. Nous ne sommes pas responsables des actes, omissions, soins, décisions ou politiques d'une clinique."]],
+        ["10. Confidentialité", ["La façon dont nous recueillons, utilisons, communiquons et protégeons les renseignements personnels est expliquée dans notre Politique de confidentialité. En acceptant les présentes conditions, vous confirmez aussi avoir lu la Politique de confidentialité et la Politique relative aux témoins."]],
+        ["11. Propriété intellectuelle", ["Le logiciel, la conception, les textes et les logos de ClinicFlow appartiennent à Call 4 Action et à ses membres. Nous vous accordons une licence personnelle, révocable, non exclusive et non transférable d'utiliser le Service aux fins prévues. Si vous nous transmettez des commentaires, nous pouvons les utiliser sans obligation envers vous."]],
+        ["12. Exclusion de garanties", ["Dans toute la mesure permise par la loi, le Service est offert « tel quel » et « selon sa disponibilité », sans garantie d'aucune sorte, expresse ou implicite, notamment de qualité marchande, d'adaptation à un usage particulier, de disponibilité ou d'absence de contrefaçon. Certaines lois sur la protection du consommateur (notamment au Québec) vous accordent des droits qui ne peuvent être exclus; rien dans les présentes conditions ne limite ces droits."]],
+        ["13. Limitation de responsabilité", ["Dans toute la mesure permise par la loi, nous (y compris les membres de l'équipe et l'Université d'Ottawa) ne sommes pas responsables des dommages indirects, accessoires, spéciaux, consécutifs ou punitifs, ni des pertes découlant : de rendez-vous manqués, retardés ou annulés; d'interruptions du Service; d'estimations ou de disponibilités inexactes; des actes ou omissions des cliniques ou des praticiens; ou d'un accès non autorisé causé par votre défaut de protéger vos identifiants. Notre responsabilité totale pour toute réclamation est limitée à 100 $ CA. Rien dans les présentes conditions n'exclut ni ne limite une responsabilité qui ne peut l'être en vertu de la loi, comme la responsabilité pour faute intentionnelle ou lourde, ou pour un préjudice corporel ou moral causé à un consommateur au Québec."]],
+        ["14. Suspension et fermeture de votre compte", ["Nous pouvons suspendre ou fermer un accès qui contrevient aux présentes conditions ou qui met d'autres personnes en danger. Vous pouvez supprimer votre compte en tout temps dans Compte → Confidentialité et données. Les articles qui, de par leur nature, doivent survivre (par exemple les articles 3, 12, 13 et 16) continuent de s'appliquer après la fermeture de votre compte."]],
+        ["15. Modifications des conditions", ["Nous pouvons mettre à jour les présentes conditions. La date de la version en vigueur est indiquée en haut. En cas de changements importants, nous vous demanderons d'accepter la nouvelle version avant de continuer à utiliser le Service."]],
+        ["16. Droit applicable et langue", ["Les présentes conditions sont régies par les lois de la province de l'Ontario et les lois fédérales du Canada qui s'y appliquent, et les litiges relèvent des tribunaux de l'Ontario, sauf si la loi sur la protection du consommateur de votre province ou territoire vous donne le droit d'appliquer sa loi ou de vous adresser à ses tribunaux. Les présentes conditions sont offertes en français et en anglais; les deux versions ont la même valeur. Les parties ont exigé que la présente convention et les documents qui s'y rattachent soient rédigés en français et en anglais. The parties have required that this agreement and related documents be drawn up in both English and French."]],
+        ["17. Nous joindre", ["Questions sur les présentes conditions : {email}."]],
+      ] },
+  },
+  // =====================================================================================================
+  privacy: {
+    en: { title: "Privacy Policy", intro: "Your privacy matters to us. This policy explains, in plain language, what personal information ClinicFlow collects, why, who can see it, how long we keep it, how we protect it and the rights you have.",
+      sections: [
+        ["1. Who is responsible", ["ClinicFlow is operated by Call 4 Action, a student design team at the University of Ottawa (GNG 1103). We are accountable for the personal information in your ClinicFlow account under Canada's Personal Information Protection and Electronic Documents Act (PIPEDA) and, where it applies, Quebec's Act respecting the protection of personal information in the private sector (Law 25). Our Privacy Officer can be reached at {email}."]],
+        ["2. Clinics and your health information", ["When you book with a clinic, information about that appointment (for example, that you are a patient of the clinic, the date, the practitioner and the visit type) may be personal health information. The clinic is the health information custodian of this information under Ontario's Personal Health Information Protection Act, 2004 (PHIPA) or a similar law. For this information, ClinicFlow acts only as an electronic service provider on the clinic's behalf: we use it only to provide the Service to the clinic and to you, we do not disclose it except as described here or as required by law, and everyone on our team who can access it has agreed to keep it confidential. Questions about how a clinic handles your health information should also be sent to that clinic."]],
+        ["3. What we collect", [
+          "• Account information: first and last name, email address, optional phone number, preferred language, notification choice, two-step verification setting.",
+          "• Security information: your password and optional shared account password are stored only as one-way encrypted hashes (scrypt), never in readable form. Verification codes are kept in temporary memory for 10 minutes and are never written to the database.",
+          "• Family members you add: first name, last name and relationship.",
+          "• Bookings: clinic, practitioner, date and time, visit type, an optional short note (max 140 characters, no medical details), status and check-in/consultation times, and waitlist requests.",
+          "• Pre-visit forms: only the administrative answers the clinic asks for (for example preferred language or accessibility needs).",
+          "• Messages you exchange with a clinic, saved clinics and in-app notifications.",
+          "• “How busy is it?” answers: saved anonymously, without your name or account.",
+          "• Technical information: a sign-in session token, and for clinic staff, a record of which appointment records they opened or changed (access log)."]],
+        ["4. What we do NOT collect", ["We do not ask for or store diagnoses, symptoms, prescriptions, test results, treatment plans, health card numbers, social insurance numbers, payment card details, your precise location, or advertising identifiers. We do not use analytics, advertising or tracking cookies, and we do not build profiles about you."]],
+        ["5. Why we use it", [
+          "• To create and secure your account and confirm your identity (verification codes, two-step verification).",
+          "• To let you find clinics and book, change, cancel or follow appointments, for you or family members you are authorized to act for.",
+          "• To share the booking with the clinic you choose and let it manage its schedule and patient flow.",
+          "• To send the transactional messages you need (confirmations, reminders, changes, waitlist offers, replies).",
+          "• To produce wait-time estimates (using the clinic's live queue and anonymous reports).",
+          "• To protect the Service, prevent misuse and investigate security incidents.",
+          "• To meet legal obligations.",
+          "We do not use your information for any other purpose without asking you first. We never sell, rent or trade personal information, and we never use it for advertising."]],
+        ["6. Your consent", ["We ask for your express consent when you create an account, in clear terms and separately from other information. You may withdraw consent at any time by deleting your account (Account → Privacy & data) or by writing to {email}. If you withdraw consent, we will no longer be able to provide the Service to you, but clinics may keep the appointment records they are required by law to keep."]],
+        ["7. Who can see your information", [
+          "• The clinic you book with, and only the clinic staff whose role requires it (reception, nurses, clinic administrators). Every opening or change of an appointment record by staff is logged.",
+          "• Our service providers, only to run the Service and under their own security and confidentiality commitments: Google Cloud / Firebase (Cloud Firestore database, stored in the Montréal, Canada region), Google (Gmail, to send emails) and Render (web hosting, United States).",
+          "• Authorities, only when required by law (for example a court order) or to prevent imminent harm.",
+          "No one else. No data brokers, advertisers or social networks."]],
+        ["8. Information processed outside your province or Canada", ["Our database is stored in Canada (Montréal). Some providers (email delivery and web hosting) may process information in the United States or other countries, where it may be accessed by authorities under local laws. We chose large providers with recognized security safeguards and limit what they receive to what is needed."]],
+        ["9. How long we keep it", [
+          "• Account and family information: until you delete your account. Accounts unused for 24 months may be deleted after an email notice.",
+          "• Appointments: while your account exists. When you delete your account, future appointments are cancelled and past ones are de-identified (name, email, phone and notes removed), except for records a clinic must keep by law.",
+          "• Email delivery log: 90 days. In-app notifications: 180 days. Anonymous “how busy” reports: 30 days. Sign-in sessions: 30 days. Verification codes: 10 minutes. Staff access logs: 1 year.",
+          "When information is no longer needed, it is securely deleted or anonymized."]],
+        ["10. How we protect it", [
+          "• Encryption in transit (HTTPS) and at rest (Google Cloud).",
+          "• Passwords stored as salted scrypt hashes; emailed 6-digit codes with expiry and limited attempts; optional two-step verification; limits on repeated sign-in attempts.",
+          "• Role-based access: patients see only their own information; staff see only their clinic; administrator settings are limited to administrators.",
+          "• Staff must accept a confidentiality agreement; their access to appointment records is logged and can be reviewed by the clinic.",
+          "• Security headers, minimal data collection and no third-party tracking.",
+          "No system is perfectly secure, but we work to protect your information and to improve our safeguards."]],
+        ["11. If there is a privacy breach", ["If a breach of security safeguards involving your personal information creates a real risk of significant harm, we will notify you and the affected clinic as soon as feasible, and report it to the Office of the Privacy Commissioner of Canada and, where required, to the Information and Privacy Commissioner of Ontario or the Commission d'accès à l'information du Québec. We keep a record of all privacy incidents."]],
+        ["12. Your rights", [
+          "• Access and portability: download a copy of your information at any time (Account → Privacy & data → Download my data).",
+          "• Correction: edit your profile at any time, or ask us to correct information.",
+          "• Deletion and withdrawal of consent: delete your account at any time (Account → Privacy & data → Delete my account).",
+          "• Information: ask us what we hold about you, how it is used and to whom it was disclosed.",
+          "• Complaint: contact our Privacy Officer at {email}. We answer within 30 days. You may also complain to the Office of the Privacy Commissioner of Canada (priv.gc.ca), the Information and Privacy Commissioner of Ontario (ipc.on.ca) or the Commission d'accès à l'information du Québec (cai.gouv.qc.ca)."]],
+        ["13. Children", ["You must be of the age of majority to create an account. Information about a minor may only be entered by a parent, guardian or authorized representative using the family feature."]],
+        ["14. Automated estimates", ["Wait-time and “how busy” estimates are calculated automatically from the clinic's live queue, past visit durations and anonymous reports. They are for convenience only and are never used to make decisions about you or your access to care."]],
+        ["15. Cookies and similar technologies", ["See our Cookie Policy. In short: we use only what is needed to keep you signed in and remember your choices, plus optional preferences you can turn off."]],
+        ["16. Changes", ["We will post any changes here with a new date and ask you to accept important changes."]],
+      ] },
+    fr: { title: "Politique de confidentialité", intro: "Votre vie privée nous tient à cœur. La présente politique explique, en langage clair, quels renseignements personnels ClinicFlow recueille, pourquoi, qui peut les voir, combien de temps nous les conservons, comment nous les protégeons et quels sont vos droits.",
+      sections: [
+        ["1. Qui est responsable", ["ClinicFlow est exploité par Call 4 Action, une équipe étudiante de conception de l'Université d'Ottawa (GNG 1103). Nous sommes responsables des renseignements personnels de votre compte ClinicFlow en vertu de la Loi sur la protection des renseignements personnels et les documents électroniques (LPRPDE) du Canada et, lorsqu'elle s'applique, de la Loi sur la protection des renseignements personnels dans le secteur privé du Québec (Loi 25). Vous pouvez joindre notre responsable de la protection des renseignements personnels à {email}."]],
+        ["2. Les cliniques et vos renseignements sur la santé", ["Lorsque vous réservez auprès d'une clinique, les renseignements sur ce rendez-vous (par exemple le fait que vous êtes patient de la clinique, la date, le praticien et le type de visite) peuvent constituer des renseignements personnels sur la santé. La clinique est le dépositaire de ces renseignements au sens de la Loi de 2004 sur la protection des renseignements personnels sur la santé de l'Ontario (LPRPS) ou d'une loi semblable. Pour ces renseignements, ClinicFlow agit uniquement comme fournisseur de services électroniques pour le compte de la clinique : nous les utilisons seulement pour fournir le Service à la clinique et à vous, nous ne les communiquons pas sauf de la façon décrite ici ou si la loi l'exige, et toutes les personnes de notre équipe qui y ont accès se sont engagées à en préserver la confidentialité. Les questions sur la façon dont une clinique traite vos renseignements sur la santé devraient aussi être adressées à cette clinique."]],
+        ["3. Ce que nous recueillons", [
+          "• Renseignements du compte : prénom et nom, adresse courriel, numéro de téléphone facultatif, langue préférée, choix d'avis, paramètre de vérification en deux étapes.",
+          "• Renseignements de sécurité : votre mot de passe et votre mot de passe de compte partagé facultatif sont conservés uniquement sous forme de hachages chiffrés à sens unique (scrypt), jamais sous forme lisible. Les codes de vérification sont gardés en mémoire temporaire pendant 10 minutes et ne sont jamais inscrits dans la base de données.",
+          "• Membres de la famille que vous ajoutez : prénom, nom et lien.",
+          "• Réservations : clinique, praticien, date et heure, type de visite, courte note facultative (140 caractères au maximum, sans détails médicaux), statut et heures d'arrivée et de consultation, ainsi que les demandes de liste d'attente.",
+          "• Formulaires de préenregistrement : seulement les réponses administratives demandées par la clinique (par exemple la langue préférée ou les besoins d'accessibilité).",
+          "• Les messages échangés avec une clinique, les cliniques enregistrées et les avis dans l'application.",
+          "• Réponses « Est-ce achalandé? » : enregistrées de façon anonyme, sans votre nom ni votre compte.",
+          "• Renseignements techniques : un jeton de session de connexion et, pour le personnel des cliniques, un registre des dossiers de rendez-vous consultés ou modifiés (journal des accès)."]],
+        ["4. Ce que nous NE recueillons PAS", ["Nous ne demandons ni ne conservons de diagnostics, symptômes, ordonnances, résultats d'examens, plans de traitement, numéros de carte santé, numéros d'assurance sociale, données de carte de paiement, votre position précise ou identifiants publicitaires. Nous n'utilisons aucun témoin d'analyse, de publicité ou de suivi et ne créons aucun profil à votre sujet."]],
+        ["5. Pourquoi nous les utilisons", [
+          "• Créer et sécuriser votre compte et confirmer votre identité (codes de vérification, vérification en deux étapes).",
+          "• Vous permettre de trouver des cliniques et de réserver, modifier, annuler ou suivre des rendez-vous, pour vous ou pour les membres de votre famille pour lesquels vous êtes autorisé à agir.",
+          "• Communiquer la réservation à la clinique que vous choisissez et lui permettre de gérer son horaire et le cheminement des patients.",
+          "• Envoyer les messages transactionnels dont vous avez besoin (confirmations, rappels, modifications, offres de la liste d'attente, réponses).",
+          "• Produire des estimations de temps d'attente (à partir de la file d'attente en direct de la clinique et de signalements anonymes).",
+          "• Protéger le Service, prévenir les abus et enquêter sur les incidents de sécurité.",
+          "• Respecter nos obligations légales.",
+          "Nous n'utilisons pas vos renseignements à d'autres fins sans d'abord vous le demander. Nous ne vendons, ne louons ni n'échangeons jamais de renseignements personnels, et nous ne les utilisons jamais à des fins publicitaires."]],
+        ["6. Votre consentement", ["Nous demandons votre consentement exprès lors de la création de votre compte, en termes clairs et distinctement de toute autre information. Vous pouvez retirer votre consentement en tout temps en supprimant votre compte (Compte → Confidentialité et données) ou en écrivant à {email}. Si vous retirez votre consentement, nous ne pourrons plus vous offrir le Service, mais les cliniques peuvent conserver les dossiers de rendez-vous que la loi les oblige à conserver."]],
+        ["7. Qui peut voir vos renseignements", [
+          "• La clinique auprès de laquelle vous réservez, et seulement les membres de son personnel dont le rôle l'exige (réception, infirmières, administrateurs de la clinique). Chaque consultation ou modification d'un dossier de rendez-vous par le personnel est consignée.",
+          "• Nos fournisseurs de services, uniquement pour faire fonctionner le Service et selon leurs propres engagements de sécurité et de confidentialité : Google Cloud / Firebase (base de données Cloud Firestore, hébergée dans la région de Montréal, Canada), Google (Gmail, pour l'envoi des courriels) et Render (hébergement Web, États-Unis).",
+          "• Les autorités, seulement lorsque la loi l'exige (par exemple une ordonnance d'un tribunal) ou pour prévenir un préjudice imminent.",
+          "Personne d'autre. Aucun courtier en données, annonceur ni réseau social."]],
+        ["8. Renseignements traités à l'extérieur de votre province ou du Canada", ["Notre base de données est hébergée au Canada (Montréal). Certains fournisseurs (envoi de courriels et hébergement Web) peuvent traiter des renseignements aux États-Unis ou dans d'autres pays, où ils peuvent être consultés par les autorités en vertu des lois locales. Nous avons choisi de grands fournisseurs dotés de mesures de sécurité reconnues et limitons ce qu'ils reçoivent au strict nécessaire."]],
+        ["9. Durée de conservation", [
+          "• Renseignements du compte et de la famille : jusqu'à la suppression de votre compte. Les comptes inutilisés pendant 24 mois peuvent être supprimés après un avis par courriel.",
+          "• Rendez-vous : tant que votre compte existe. Lorsque vous supprimez votre compte, les rendez-vous à venir sont annulés et les rendez-vous passés sont dépersonnalisés (nom, courriel, téléphone et notes retirés), sauf les dossiers qu'une clinique doit conserver en vertu de la loi.",
+          "• Registre d'envoi des courriels : 90 jours. Avis dans l'application : 180 jours. Signalements anonymes d'achalandage : 30 jours. Sessions de connexion : 30 jours. Codes de vérification : 10 minutes. Journaux d'accès du personnel : 1 an.",
+          "Lorsque des renseignements ne sont plus nécessaires, ils sont supprimés de façon sécuritaire ou anonymisés."]],
+        ["10. Comment nous les protégeons", [
+          "• Chiffrement en transit (HTTPS) et au repos (Google Cloud).",
+          "• Mots de passe conservés sous forme de hachages scrypt salés; codes à 6 chiffres envoyés par courriel, avec expiration et nombre d'essais limité; vérification en deux étapes facultative; limites aux tentatives de connexion répétées.",
+          "• Accès selon le rôle : les patients voient seulement leurs propres renseignements; le personnel voit seulement sa clinique; les paramètres d'administration sont réservés aux administrateurs.",
+          "• Le personnel doit accepter une entente de confidentialité; ses accès aux dossiers de rendez-vous sont consignés et peuvent être vérifiés par la clinique.",
+          "• En-têtes de sécurité, collecte minimale de données et aucun suivi par des tiers.",
+          "Aucun système n'est parfaitement sécuritaire, mais nous travaillons à protéger vos renseignements et à améliorer nos mesures de sécurité."]],
+        ["11. En cas d'atteinte à la vie privée", ["Si une atteinte aux mesures de sécurité concernant vos renseignements personnels présente un risque réel de préjudice grave, nous vous en aviserons, ainsi que la clinique concernée, dès que possible, et nous la déclarerons au Commissariat à la protection de la vie privée du Canada et, s'il y a lieu, au Commissaire à l'information et à la protection de la vie privée de l'Ontario ou à la Commission d'accès à l'information du Québec. Nous tenons un registre de tous les incidents de confidentialité."]],
+        ["12. Vos droits", [
+          "• Accès et portabilité : téléchargez une copie de vos renseignements en tout temps (Compte → Confidentialité et données → Télécharger mes données).",
+          "• Rectification : modifiez votre profil en tout temps ou demandez-nous de corriger des renseignements.",
+          "• Suppression et retrait du consentement : supprimez votre compte en tout temps (Compte → Confidentialité et données → Supprimer mon compte).",
+          "• Information : demandez-nous quels renseignements nous détenons à votre sujet, comment ils sont utilisés et à qui ils ont été communiqués.",
+          "• Plainte : écrivez à notre responsable de la protection des renseignements personnels à {email}. Nous répondons dans un délai de 30 jours. Vous pouvez aussi porter plainte auprès du Commissariat à la protection de la vie privée du Canada (priv.gc.ca), du Commissaire à l'information et à la protection de la vie privée de l'Ontario (ipc.on.ca) ou de la Commission d'accès à l'information du Québec (cai.gouv.qc.ca)."]],
+        ["13. Enfants", ["Vous devez avoir atteint l'âge de la majorité pour créer un compte. Les renseignements concernant une personne mineure ne peuvent être inscrits que par un parent, un tuteur ou un représentant autorisé, au moyen de la fonction famille."]],
+        ["14. Estimations automatisées", ["Les estimations de temps d'attente et d'achalandage sont calculées automatiquement à partir de la file d'attente en direct de la clinique, de la durée des visites passées et de signalements anonymes. Elles sont fournies à titre indicatif seulement et ne servent jamais à prendre des décisions à votre sujet ou concernant votre accès aux soins."]],
+        ["15. Témoins et technologies semblables", ["Consultez notre Politique relative aux témoins. En bref : nous utilisons seulement ce qui est nécessaire pour vous garder connecté et retenir vos choix, ainsi que des préférences facultatives que vous pouvez désactiver."]],
+        ["16. Modifications", ["Nous publierons toute modification ici avec une nouvelle date et vous demanderons d'accepter les changements importants."]],
+      ] },
+  },
+  // =====================================================================================================
+  cookies: {
+    en: { title: "Cookie Policy", intro: "This policy explains the small pieces of information ClinicFlow saves in your browser. ClinicFlow does not use advertising, analytics or third-party tracking cookies.",
+      sections: [
+        ["1. What we use", ["Instead of traditional cookies, ClinicFlow uses your browser's local storage, a similar technology that keeps a few small values on your own device. They are never used to track you across websites or to build a profile."]],
+        ["2. Strictly necessary (always on)", [
+          "• cf_token – keeps you signed in on this device. Deleted when you sign out (sessions expire after 30 days).",
+          "• cf_consent – remembers that you accepted the Terms and your cookie choices, so we don't ask every time. Kept 12 months or until the documents change.",
+          "These are needed for the Service to work and for security, so they cannot be turned off."]],
+        ["3. Preferences (optional – off unless you allow them)", [
+          "• cf_lang – remembers English or French.",
+          "• cf_a11y – remembers your accessibility settings (text size, contrast, spacing, motion).",
+          "• cf_crowd_… – remembers that you already answered “How busy is it?” for a visit.",
+          "If you do not allow preferences, the app still works; your choices just reset when you close the page."]],
+        ["4. Third parties", ["No third-party content is loaded automatically: our fonts and icons are hosted on our own server. Google Maps opens only when you press “Directions”, in a new tab, under Google's own privacy policy. A clinic may choose to show a photo hosted on another website; that website may receive basic technical information (such as your IP address) when the image loads."]],
+        ["5. Changing your choice", ["Use “Cookie settings” at the bottom of any page at any time. You can also clear this site's data in your browser settings; you will then be signed out and asked for your choices again."]],
+      ] },
+    fr: { title: "Politique relative aux témoins", intro: "La présente politique explique les petits renseignements que ClinicFlow enregistre dans votre navigateur. ClinicFlow n'utilise aucun témoin (cookie) de publicité, d'analyse ou de suivi par des tiers.",
+      sections: [
+        ["1. Ce que nous utilisons", ["Plutôt que des témoins traditionnels, ClinicFlow utilise le stockage local de votre navigateur, une technologie semblable qui conserve quelques petites valeurs sur votre propre appareil. Elles ne servent jamais à vous suivre d'un site à l'autre ni à créer un profil."]],
+        ["2. Strictement nécessaires (toujours actifs)", [
+          "• cf_token – vous garde connecté sur cet appareil. Supprimé à la déconnexion (les sessions expirent après 30 jours).",
+          "• cf_consent – retient que vous avez accepté les conditions et vos choix relatifs aux témoins, pour ne pas vous les redemander chaque fois. Conservé 12 mois ou jusqu'à la modification des documents.",
+          "Ils sont nécessaires au fonctionnement et à la sécurité du Service et ne peuvent donc pas être désactivés."]],
+        ["3. Préférences (facultatives – désactivées sauf si vous les autorisez)", [
+          "• cf_lang – retient le français ou l'anglais.",
+          "• cf_a11y – retient vos réglages d'accessibilité (taille du texte, contraste, espacement, animations).",
+          "• cf_crowd_… – retient que vous avez déjà répondu à « Est-ce achalandé? » pour une visite.",
+          "Si vous n'autorisez pas les préférences, l'application fonctionne quand même; vos choix sont simplement réinitialisés lorsque vous fermez la page."]],
+        ["4. Tiers", ["Aucun contenu de tiers n'est chargé automatiquement : nos polices et nos icônes sont hébergées sur notre propre serveur. Google Maps s'ouvre seulement lorsque vous appuyez sur « Itinéraire », dans un nouvel onglet, selon la politique de confidentialité de Google. Une clinique peut choisir d'afficher une photo hébergée sur un autre site Web; ce site peut recevoir des renseignements techniques de base (comme votre adresse IP) lorsque l'image se charge."]],
+        ["5. Modifier votre choix", ["Utilisez « Paramètres des témoins » au bas de n'importe quelle page, en tout temps. Vous pouvez aussi effacer les données de ce site dans les paramètres de votre navigateur; vous serez alors déconnecté et vos choix vous seront redemandés."]],
+      ] },
+  },
+  // =====================================================================================================
+  accessibility: {
+    en: { title: "Accessibility Statement", intro: "ClinicFlow is designed so that everyone can book and follow their care, whatever their abilities.",
+      sections: [
+        ["Our commitment", ["We aim to meet the Web Content Accessibility Guidelines (WCAG) 2.1, level AA, in line with Ontario's Accessibility for Ontarians with Disabilities Act (AODA). Every page is checked with automated accessibility testing and keyboard-only testing."]],
+        ["Features", ["• Adjustable text size, high contrast, easier-reading spacing and reduced motion.", "• Voice control and read-aloud, for people who cannot easily type or read.", "• Works with screen readers (VoiceOver, TalkBack, NVDA, JAWS), switch access and the keyboard alone.", "• Full English and French.", "• Large touch targets and a layout that works on phones, tablets and computers."]],
+        ["Other ways to book", ["You can always book, change or cancel by phone or in person with your clinic. Staff can book for you in ClinicFlow."]],
+        ["Feedback and alternate formats", ["If something is hard to use, or you need these documents in another format (large print, plain text, read aloud), contact {email}. We will respond and work with you on a solution."]],
+      ] },
+    fr: { title: "Déclaration d'accessibilité", intro: "ClinicFlow est conçu pour que tout le monde puisse réserver et suivre ses soins, quelles que soient ses capacités.",
+      sections: [
+        ["Notre engagement", ["Nous visons à respecter les Règles pour l'accessibilité des contenus Web (WCAG) 2.1, niveau AA, conformément à la Loi de 2005 sur l'accessibilité pour les personnes handicapées de l'Ontario (LAPHO). Chaque page est vérifiée par des tests d'accessibilité automatisés et des tests au clavier seulement."]],
+        ["Fonctions", ["• Taille du texte réglable, contraste élevé, espacement facilitant la lecture et réduction des animations.", "• Commande vocale et lecture à voix haute, pour les personnes qui ne peuvent pas facilement taper ou lire.", "• Compatible avec les lecteurs d'écran (VoiceOver, TalkBack, NVDA, JAWS), l'accès par contacteur et le clavier seul.", "• Entièrement en français et en anglais.", "• Grandes zones tactiles et mise en page adaptée aux téléphones, tablettes et ordinateurs."]],
+        ["Autres façons de réserver", ["Vous pouvez toujours réserver, modifier ou annuler par téléphone ou en personne auprès de votre clinique. Le personnel peut réserver pour vous dans ClinicFlow."]],
+        ["Commentaires et autres formats", ["Si quelque chose est difficile à utiliser, ou si vous avez besoin de ces documents dans un autre format (gros caractères, texte simple, lecture à voix haute), écrivez à {email}. Nous vous répondrons et chercherons une solution avec vous."]],
+      ] },
+  },
+  // =====================================================================================================
+  staff: {
+    en: { title: "Staff Confidentiality & Acceptable Use Agreement", intro: "You are accessing personal and personal health information on behalf of your clinic. Please read and accept this agreement before continuing.",
+      sections: [
+        ["Your commitments", [
+          "• I will access, use and share patient information only when I need it to do my job at this clinic (need-to-know). I will never look up my own record, or records of family, friends, colleagues or public figures, out of curiosity.",
+          "• I will keep my password and verification codes private, never share my account, and sign out of shared computers.",
+          "• I will not copy, photograph, print, download, email or otherwise remove patient information from ClinicFlow except as my clinic authorizes.",
+          "• I will not enter clinical information (diagnoses, symptoms, treatments, test results) in ClinicFlow notes, forms or messages.",
+          "• I will report any suspected privacy breach, lost device or misuse immediately to my clinic's privacy contact.",
+          "• I will follow my clinic's privacy and security policies and applicable laws, including Ontario's PHIPA."]],
+        ["I understand that", [
+          "• I act as an agent of my clinic, which is the health information custodian.",
+          "• Every time I open or change an appointment record, it is recorded in an access log that my clinic can review.",
+          "• Breaking this agreement may lead to loss of access, discipline including dismissal, reports to my regulatory college, and fines or prosecution under privacy laws.",
+          "• My confidentiality obligations continue after my access ends."]],
+      ] },
+    fr: { title: "Entente de confidentialité et d'utilisation acceptable du personnel", intro: "Vous accédez à des renseignements personnels et à des renseignements personnels sur la santé pour le compte de votre clinique. Veuillez lire et accepter la présente entente avant de continuer.",
+      sections: [
+        ["Mes engagements", [
+          "• J'accéderai aux renseignements des patients, les utiliserai et les communiquerai seulement lorsque j'en ai besoin pour faire mon travail à cette clinique (principe du besoin de savoir). Je ne consulterai jamais, par curiosité, mon propre dossier ni ceux de membres de ma famille, d'amis, de collègues ou de personnalités publiques.",
+          "• Je garderai mon mot de passe et mes codes de vérification confidentiels, je ne partagerai jamais mon compte et je me déconnecterai des ordinateurs partagés.",
+          "• Je ne copierai, photographierai, imprimerai, téléchargerai, n'enverrai par courriel ni ne retirerai d'aucune autre façon des renseignements de patients de ClinicFlow, sauf avec l'autorisation de ma clinique.",
+          "• Je n'inscrirai aucun renseignement clinique (diagnostics, symptômes, traitements, résultats d'examens) dans les notes, formulaires ou messages de ClinicFlow.",
+          "• Je signalerai immédiatement à la personne responsable de la confidentialité de ma clinique toute atteinte présumée à la vie privée, perte d'appareil ou utilisation abusive.",
+          "• Je respecterai les politiques de confidentialité et de sécurité de ma clinique et les lois applicables, y compris la LPRPS de l'Ontario."]],
+        ["Je comprends que", [
+          "• J'agis à titre de mandataire de ma clinique, qui est le dépositaire des renseignements sur la santé.",
+          "• Chaque fois que je consulte ou modifie un dossier de rendez-vous, cela est consigné dans un journal des accès que ma clinique peut vérifier.",
+          "• Le non-respect de la présente entente peut entraîner la perte de mon accès, des mesures disciplinaires pouvant aller jusqu'au congédiement, un signalement à mon ordre professionnel ainsi que des amendes ou des poursuites en vertu des lois sur la protection de la vie privée.",
+          "• Mes obligations de confidentialité se poursuivent après la fin de mon accès."]],
+      ] },
+  },
+  // =====================================================================================================
+  clinic: {
+    en: { title: "Clinic Service Agreement", intro: "This agreement applies between your clinic and Call 4 Action when your clinic registers with ClinicFlow.",
+      sections: [
+        ["1. Roles", ["Your clinic is the health information custodian of its patients' personal health information under PHIPA (or the equivalent law where it operates) and remains responsible for its services, staff, schedules and compliance. Call 4 Action provides ClinicFlow as an electronic service provider acting on your clinic's behalf."]],
+        ["2. What we commit to", ["• Use your patients' information only to provide ClinicFlow to your clinic and its patients, and never sell it or use it for advertising.", "• Not disclose it except to our listed service providers as needed to run the Service, or as required by law.", "• Require everyone on our team with access to agree to confidentiality.", "• Keep an access log of staff openings and changes of appointment records and give it to you on request.", "• Notify you at the first reasonable opportunity of any unauthorized access, use or disclosure, and cooperate with you on notifications and reports.", "• Return or delete your clinic's data when you stop using ClinicFlow, except where retention is required by law."]],
+        ["3. What your clinic commits to", ["• Make sure you have the authority to use ClinicFlow and that patients are informed as required by law.", "• Give access only to staff who need it, assign the right role, and remove access promptly when someone leaves.", "• Make sure staff accept and follow the Staff Confidentiality Agreement.", "• Not store clinical records in ClinicFlow; it is a booking and patient-flow tool, not an electronic medical record.", "• Keep your clinic information, practitioners, hours and policies accurate."]],
+        ["4. Prototype status", ["ClinicFlow is a university student prototype. Before using it with real patients in day-to-day operations, your clinic is responsible for completing its own privacy impact assessment and threat/risk assessment and for confirming it meets your professional and legal obligations. ClinicFlow is provided as is, and the Terms of Use (including the disclaimers and limitation of liability) also apply to your clinic."]],
+        ["5. Contact", ["Privacy and security contact: {email}."]],
+      ] },
+    fr: { title: "Entente de service pour les cliniques", intro: "La présente entente s'applique entre votre clinique et Call 4 Action lorsque votre clinique s'inscrit à ClinicFlow.",
+      sections: [
+        ["1. Rôles", ["Votre clinique est le dépositaire des renseignements personnels sur la santé de ses patients au sens de la LPRPS (ou de la loi équivalente là où elle exerce ses activités) et demeure responsable de ses services, de son personnel, de ses horaires et de sa conformité. Call 4 Action fournit ClinicFlow à titre de fournisseur de services électroniques agissant pour le compte de votre clinique."]],
+        ["2. Nos engagements", ["• Utiliser les renseignements de vos patients uniquement pour fournir ClinicFlow à votre clinique et à ses patients, et ne jamais les vendre ni les utiliser à des fins publicitaires.", "• Ne pas les communiquer, sauf à nos fournisseurs de services énumérés lorsque cela est nécessaire au fonctionnement du Service, ou si la loi l'exige.", "• Exiger de toute personne de notre équipe qui y a accès un engagement de confidentialité.", "• Tenir un journal des consultations et modifications des dossiers de rendez-vous par le personnel et vous le remettre sur demande.", "• Vous aviser à la première occasion raisonnable de tout accès, utilisation ou communication non autorisés, et collaborer avec vous pour les avis et déclarations.", "• Retourner ou supprimer les données de votre clinique lorsque vous cessez d'utiliser ClinicFlow, sauf si la loi exige leur conservation."]],
+        ["3. Les engagements de votre clinique", ["• Vous assurer d'avoir le pouvoir d'utiliser ClinicFlow et que les patients sont informés comme l'exige la loi.", "• Donner accès seulement au personnel qui en a besoin, attribuer le bon rôle et retirer rapidement l'accès des personnes qui quittent.", "• Vous assurer que le personnel accepte et respecte l'Entente de confidentialité du personnel.", "• Ne pas conserver de dossiers cliniques dans ClinicFlow, qui est un outil de réservation et de suivi des patients, et non un dossier médical électronique.", "• Tenir à jour les renseignements, praticiens, heures et politiques de votre clinique."]],
+        ["4. Statut de prototype", ["ClinicFlow est un prototype étudiant universitaire. Avant de l'utiliser avec de vrais patients dans les activités quotidiennes, votre clinique a la responsabilité de réaliser sa propre évaluation des facteurs relatifs à la vie privée et sa propre évaluation des menaces et des risques, et de confirmer qu'il respecte ses obligations professionnelles et légales. ClinicFlow est offert tel quel, et les Conditions d'utilisation (y compris les exclusions de garanties et la limitation de responsabilité) s'appliquent aussi à votre clinique."]],
+        ["5. Nous joindre", ["Responsable de la confidentialité et de la sécurité : {email}."]],
+      ] },
+  },
+};
