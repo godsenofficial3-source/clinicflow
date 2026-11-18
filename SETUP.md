@@ -82,6 +82,13 @@ These are fake addresses, so they can't receive emails. **To see real emails, cr
 3. Set the run command to `npm install && npm start` and press **Run**. Replit shows a public `https://…` address: that's your shareable link.
    (On the free plan the app sleeps when nobody uses it. Your data is safe in Firebase, and it wakes up on the next visit.)
 
+## Our live site (Render, free plan)
+
+- **Link:** https://clinicflow-64da.onrender.com (the first visit after a quiet period takes about 50 seconds)
+- **Data:** Firebase project `call4action-clinicflow`, Firestore in Montréal. The key is uploaded in Render → Environment → **Secret Files** (any `…firebase-adminsdk….json` file name works).
+- **Email:** Render's free plan blocks normal email ports, so emails go through a small Google Apps Script owned by `clinicflowcallaction@gmail.com` (`google-apps-script/send-email.gs`). Its web app URL is saved in Render as `EMAIL_WEBHOOK_URL`. Gmail allows about 100 emails per day this way.
+- **Updating the code:** upload the changed files to GitHub, then in Render click **Manual Deploy → Deploy latest commit**.
+
 ## Use it in Figma Make, Anvil, CodePen or another builder
 
 `clinicflow-app.html` is the **whole website in one file** (all the HTML, CSS and JavaScript).
