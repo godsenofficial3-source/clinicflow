@@ -6,14 +6,18 @@ const store = require("./store");
 
 let transporter = null;
 let ready = false;
+// EMAIL_WEBHOOK_URL: a Google Apps Script web app (see google-apps-script/send-email.gs) that sends the
+// email from the Gmail account over HTTPS. Use it on hosts that block email ports (Render's free plan does).
+const WEBHOOK = (process.env.EMAIL_WEBHOOK_URL || "").trim();
 function setup() {
+  if (WEBHOOK) { ready = true; console.log("  Email: Gmail ✔ (via Google Apps Script)"); return; }
   if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) return;
   transporter = nodemailer.createTransport({ service: "gmail", auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD.replace(/\s/g, "") } });
   transporter.verify().then(() => { ready = true; console.log("  Email: connected to Gmail as " + process.env.GMAIL_USER); })
     .catch((e) => console.error("  Email: Gmail login FAILED – check GMAIL_USER / GMAIL_APP_PASSWORD (" + e.message + ")"));
   ready = true; // optimistic until verify() answers
 }
-const demoMode = () => !transporter;
+const demoMode = () => !transporter && !WEBHOOK;
 const APP_URL = (process.env.APP_URL || process.env.RENDER_EXTERNAL_URL || "").replace(/\/$/, "");
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
@@ -36,7 +40,15 @@ function html(subject, body, lang, code) {
 async function send({ channel = "email", to, subject = "ClinicFlow", body, clinicId = null, lang = "en", code = null }) {
   if (!to || channel !== "email") return { ok: false, status: "skipped" };
   let status = "demo";
-  if (transporter) {
+  if (WEBHOOK) {
+    try {
+      const r = await fetch(WEBHOOK, { method: "POST", headers: { "Content-Type": "text/plain" }, redirect: "follow",
+        body: JSON.stringify({ to, subject, text: body + (code ? `\n\n${code}` : ""), html: html(subject, body, lang, code) }) });
+      const out = await r.text();
+      if (!r.ok || !/"ok"\s*:\s*true/.test(out)) throw new Error("HTTP " + r.status + " " + out.slice(0, 200));
+      status = "sent";
+    } catch (e) { console.error("[email]", e.message); status = "failed"; }
+  } else if (transporter) {
     try {
       await transporter.sendMail({ from: `"ClinicFlow" <${process.env.GMAIL_USER}>`, to, subject, text: body + (code ? `\n\n${code}` : ""), html: html(subject, body, lang, code) });
       status = "sent";
