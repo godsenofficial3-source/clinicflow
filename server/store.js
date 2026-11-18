@@ -26,6 +26,18 @@ function serviceAccount() {
     const p = path.join(ROOT, f);
     if (fs.existsSync(p)) return JSON.parse(fs.readFileSync(p, "utf8"));
   }
+  // Also accept the key file under the name Firebase gave it (…-firebase-adminsdk-….json), in the
+  // project folder or in /etc/secrets (Render "Secret Files").
+  for (const dir of [ROOT, "/etc/secrets"]) {
+    let names = [];
+    try { names = fs.readdirSync(dir); } catch { continue; }
+    for (const f of names.filter((n) => n.endsWith(".json") && n !== "package.json" && n !== "package-lock.json")) {
+      try {
+        const j = JSON.parse(fs.readFileSync(path.join(dir, f), "utf8"));
+        if (j && j.type === "service_account" && j.private_key) return j;
+      } catch {}
+    }
+  }
   return null;
 }
 
