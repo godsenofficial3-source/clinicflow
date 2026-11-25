@@ -623,7 +623,12 @@ app.post("/api/waitlist", auth("patient"), async (req, res) => {
       w.date === date && w.provider_id === providerId && w.type_id === typeId && (w.status === "waiting" || offerActive(w)));
     return duplicate ? {} : { writes: [{ collection: "waitlist", value, insert: true }] };
   });
-  if (result.writes) pushClinic(clinicId, { type: "waitlist" });
+  if (result.writes) {
+    // "joined" lets the front desk show a small corner notification (staff can already see the waitlist).
+    const type = S.get("appt_types", typeId), position = S.count("waitlist", (x) => x.clinic_id === clinicId && x.status === "waiting");
+    pushClinic(clinicId, { type: "waitlist", event: "joined", id: value.id, patient_name: name, date, position,
+      provider_name: providerId ? S.get("providers", providerId)?.name || null : null, type_en: type?.name_en || null, type_fr: type?.name_fr || null });
+  }
   res.json({ ok: true });
 });
 app.get("/api/my/waitlist", auth("patient"), (req, res) => {
