@@ -416,6 +416,26 @@ html.hc .tracker li::before { background: #000; }
   .actions .btn { flex: 1 1 auto; justify-content: center; }
 }
 
+/* "joined the waitlist" corner notification – small, Windows-style, bottom right */
+.desk-notices { position: fixed; right: 16px; bottom: 16px; z-index: 70; display: flex; flex-direction: column; gap: 10px; width: min(360px, calc(100vw - 32px)); pointer-events: none; }
+.desk-notice { pointer-events: auto; display: flex; gap: .75rem; align-items: flex-start; background: var(--card); color: var(--ink); border: 1px solid var(--line);
+  border-left: 4px solid var(--brand); border-radius: 10px; padding: .75rem .6rem .75rem .85rem; box-shadow: 0 8px 28px rgba(15, 35, 40, .18); animation: dn-in .25s ease-out; }
+.desk-notice.out { opacity: 0; transform: translateY(8px); transition: opacity .25s, transform .25s; }
+.dn-icon { flex: none; width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; background: var(--brand-soft); color: var(--brand); }
+.dn-icon .ic { width: 18px; height: 18px; }
+.dn-text { flex: 1; min-width: 0; }
+.dn-text p { margin: 0; }
+.dn-app { font-size: .72rem; color: var(--muted); font-weight: 700; letter-spacing: .02em; }
+.dn-title { font-size: .92rem; margin-top: 1px !important; }
+.dn-body { font-size: .8rem; color: var(--ink-2); margin-top: 2px !important; }
+.dn-link { display: inline-block; margin-top: .35rem; font-size: .8rem; font-weight: 700; color: var(--brand); }
+.dn-close { flex: none; border: 0; background: transparent; color: var(--muted); width: 28px; height: 28px; border-radius: 6px; display: grid; place-items: center; cursor: pointer; }
+.dn-close:hover, .dn-close:focus-visible { background: var(--bg); color: var(--ink); }
+.dn-close .ic { width: 16px; height: 16px; }
+@keyframes dn-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@media (max-width: 860px) { .desk-notices { bottom: calc(72px + env(safe-area-inset-bottom)); right: 12px; width: calc(100vw - 24px); } }
+@media (prefers-reduced-motion: reduce) { .desk-notice { animation: none; } .desk-notice.out { transition: none; } }
+
 </style>
 </head>
 <body>
@@ -754,6 +774,7 @@ window.I18N = {
   en: {
     nav_more: "More",
     tab_nav_appointments: "Visits", tab_nav_today: "Today", tab_nav_schedule: "Schedule", tab_nav_staff_book: "Book", tab_nav_waitlist: "Waitlist", tab_nav_care: "Reminders",
+    wl_notice_title: "{name} joined the waitlist", wl_notice_pos: "#{n} in line", wl_notice_open: "Open waitlist", wl_any_prov: "Any practitioner",
     patient_mode_new: "New patient", patient_mode_returning: "Returning patient",
     lookup_hint: "Type at least 2 letters of a name, or part of a phone number or email.",
     returning_selected: "Booking for {name}. Their contact details are filled in below.",
@@ -956,6 +977,7 @@ window.I18N = {
   fr: {
     nav_more: "Plus",
     tab_nav_appointments: "Visites", tab_nav_today: "Aujourd’hui", tab_nav_schedule: "Horaire", tab_nav_staff_book: "Réserver", tab_nav_waitlist: "Attente", tab_nav_care: "Rappels",
+    wl_notice_title: "{name} s’est inscrit·e à la liste d’attente", wl_notice_pos: "nº {n} dans la file", wl_notice_open: "Ouvrir la liste d’attente", wl_any_prov: "N’importe quel praticien",
     patient_mode_new: "Nouveau patient", patient_mode_returning: "Patient déjà vu",
     lookup_hint: "Tapez au moins 2 lettres d’un nom, ou une partie d’un numéro de téléphone ou d’un courriel.",
     returning_selected: "Réservation pour {name}. Ses coordonnées sont remplies ci-dessous.",
@@ -2153,6 +2175,48 @@ window.I18N = {
   let META = null;
   CF.meta = async (force) => { if (!META || force || META.clinic.id !== S.user.clinic_id) META = await api("GET", "/staff/meta"); return META; };
   CF.listeners.push((m) => { if (m.type === "meta") META = null; });
+
+  // ---------- "joined the waitlist" corner notification (front desk + admins) ----------
+  // A small card in the bottom-right corner, like a Windows notification. It does not take focus,
+  // closes on its own after 10 s (paused while the mouse is over it) and never stacks more than 3.
+  const DESK_ROLES = ["reception", "admin"];
+  CF.listeners.push((m) => {
+    if (m.type !== "waitlist" || m.event !== "joined" || !S.user || !DESK_ROLES.includes(S.user.staff_role)) return;
+    if (CF.needsStaffAgreement && CF.needsStaffAgreement()) return;
+    deskNotice(m);
+  });
+  function deskNotice(m) {
+    let box = document.getElementById("desk-notices");
+    if (!box) {
+      box = document.createElement("div");
+      box.id = "desk-notices"; box.className = "desk-notices";
+      box.setAttribute("role", "status"); box.setAttribute("aria-live", "polite");
+      document.body.appendChild(box);
+    }
+    const when = m.date ? CF.relDay(m.date) : t("any_day");
+    const details = [when, S.lang === "fr" ? m.type_fr : m.type_en, m.provider_name || t("wl_any_prov")].filter(Boolean).join(" · ");
+    const el = document.createElement("div");
+    el.className = "desk-notice";
+    el.innerHTML = `<div class="dn-icon">${I("hourglass")}</div>
+      <div class="dn-text"><p class="dn-app">ClinicFlow · ${t("nav_waitlist")}</p>
+        <p class="dn-title">${t("wl_notice_title", { name: `<b>${esc(m.patient_name || "")}</b>` })}</p>
+        <p class="dn-body">${esc(details)}${m.position ? ` · ${esc(t("wl_notice_pos", { n: m.position }))}` : ""}</p>
+        <a class="dn-link" href="#/staff/waitlist">${t("wl_notice_open")}</a></div>
+      <button class="dn-close" aria-label="${esc(t("close"))}">${I("x")}</button>`;
+    let timer;
+    const close = () => { clearTimeout(timer); el.classList.add("out"); setTimeout(() => el.remove(), 250); };
+    const arm = () => { clearTimeout(timer); timer = setTimeout(close, 10000); };
+    el.querySelector(".dn-close").addEventListener("click", close);
+    el.querySelector(".dn-link").addEventListener("click", close);
+    el.addEventListener("mouseenter", () => clearTimeout(timer));
+    el.addEventListener("mouseleave", arm);
+    el.addEventListener("focusin", () => clearTimeout(timer));
+    el.addEventListener("focusout", arm);
+    box.appendChild(el);
+    while (box.children.length > 3) box.firstElementChild.remove();
+    arm();
+  }
+  CF.deskNotice = deskNotice;
   const st = (key) => META?.statuses.find((s) => s.key === key);
   const NEXT = { booked: ["checked_in", "act_check_in"], checked_in: ["waiting", "act_to_waiting"], waiting: ["in_consult", "act_start"], in_consult: ["completed", "act_complete"] };
   const nextBtn = (a, sm = true) => NEXT[a.status] ? `<button class="btn ${sm ? "sm" : ""} next-btn" style="--c:${esc(st(NEXT[a.status][0])?.color || "#0E6F66")}" data-act="advance" data-id="${a.id}" data-to="${NEXT[a.status][0]}">${t(NEXT[a.status][1])} ${I("chevR")}</button>` : "";
