@@ -2,7 +2,7 @@
    {email} = privacy contact, {updated} = version date. Lines starting with "• " are bullet points.
    IMPORTANT: these documents were drafted for a university prototype. Have them reviewed by a lawyer
    before ClinicFlow is used with real patients in production. */
-window.LEGAL_VERSION = "2026-11-13";
+window.LEGAL_VERSION = "2026-11-24";
 window.LEGAL = {
   // =====================================================================================================
   terms: {
@@ -100,6 +100,7 @@ window.LEGAL = {
           "• Bookings: clinic, practitioner, date and time, visit type, an optional short note (max 140 characters, no medical details), status and check-in/consultation times, and waitlist requests.",
           "• Pre-visit forms: only the administrative answers the clinic asks for (for example preferred language or accessibility needs).",
           "• Messages you exchange with a clinic, saved clinics and in-app notifications.",
+          "• Visit reminders: the type, generic label, dates and times your practitioner sets for your reminders. The calendar contains no medication names, doses or clinical instructions.",
           "• “How busy is it?” answers: saved anonymously, without your name or account.",
           "• Technical information: a sign-in session token, and for clinic staff, a record of which appointment records they opened or changed (access log)."]],
         ["4. What we do NOT collect", ["We do not ask for or store diagnoses, symptoms, prescriptions, test results, treatment plans, health card numbers, social insurance numbers, payment card details, your precise location, or advertising identifiers. We do not use analytics, advertising or tracking cookies, and we do not build profiles about you."]],
@@ -115,12 +116,14 @@ window.LEGAL = {
         ["6. Your consent", ["We ask for your express consent when you create an account, in clear terms and separately from other information. You may withdraw consent at any time by deleting your account (Account → Privacy & data) or by writing to {email}. If you withdraw consent, we will no longer be able to provide the Service to you, but clinics may keep the appointment records they are required by law to keep."]],
         ["7. Who can see your information", [
           "• The clinic you book with, and only the clinic staff whose role requires it (reception, nurses, clinic administrators). Every opening or change of an appointment record by staff is logged.",
+          "• Your reminder calendar is available to your account and editable by the practitioner assigned to the completed visit.",
           "• Our service providers, only to run the Service and under their own security and confidentiality commitments: Google Cloud / Firebase (Cloud Firestore database, stored in the Montréal, Canada region), Google (Gmail, to send emails) and Render (web hosting, United States).",
           "• Authorities, only when required by law (for example a court order) or to prevent imminent harm.",
           "No one else. No data brokers, advertisers or social networks."]],
         ["8. Information processed outside your province or Canada", ["Our database is stored in Canada (Montréal). Some providers (email delivery and web hosting) may process information in the United States or other countries, where it may be accessed by authorities under local laws. We chose large providers with recognized security safeguards and limit what they receive to what is needed."]],
         ["9. How long we keep it", [
           "• Account and family information: until you delete your account. Accounts unused for 24 months may be deleted after an email notice.",
+          "• Reminder schedules: until removed by the practitioner or deleted with your account.",
           "• Appointments: while your account exists. When you delete your account, future appointments are cancelled and past ones are de-identified (name, email, phone and notes removed), except for records a clinic must keep by law.",
           "• Email delivery log: 90 days. In-app notifications: 180 days. Anonymous “how busy” reports: 30 days. Sign-in sessions: 30 days. Verification codes: 10 minutes. Staff access logs: 1 year.",
           "When information is no longer needed, it is securely deleted or anonymized."]],
@@ -154,6 +157,7 @@ window.LEGAL = {
           "• Réservations : clinique, praticien, date et heure, type de visite, courte note facultative (140 caractères au maximum, sans détails médicaux), statut et heures d'arrivée et de consultation, ainsi que les demandes de liste d'attente.",
           "• Formulaires de préenregistrement : seulement les réponses administratives demandées par la clinique (par exemple la langue préférée ou les besoins d'accessibilité).",
           "• Les messages échangés avec une clinique, les cliniques enregistrées et les avis dans l'application.",
+          "• Rappels de visite : le type, le libellé générique, les dates et les heures établis par votre praticien. Le calendrier ne contient aucun nom de médicament, aucune dose et aucune consigne clinique.",
           "• Réponses « Est-ce achalandé? » : enregistrées de façon anonyme, sans votre nom ni votre compte.",
           "• Renseignements techniques : un jeton de session de connexion et, pour le personnel des cliniques, un registre des dossiers de rendez-vous consultés ou modifiés (journal des accès)."]],
         ["4. Ce que nous NE recueillons PAS", ["Nous ne demandons ni ne conservons de diagnostics, symptômes, ordonnances, résultats d'examens, plans de traitement, numéros de carte santé, numéros d'assurance sociale, données de carte de paiement, votre position précise ou identifiants publicitaires. Nous n'utilisons aucun témoin d'analyse, de publicité ou de suivi et ne créons aucun profil à votre sujet."]],
@@ -175,6 +179,7 @@ window.LEGAL = {
         ["8. Renseignements traités à l'extérieur de votre province ou du Canada", ["Notre base de données est hébergée au Canada (Montréal). Certains fournisseurs (envoi de courriels et hébergement Web) peuvent traiter des renseignements aux États-Unis ou dans d'autres pays, où ils peuvent être consultés par les autorités en vertu des lois locales. Nous avons choisi de grands fournisseurs dotés de mesures de sécurité reconnues et limitons ce qu'ils reçoivent au strict nécessaire."]],
         ["9. Durée de conservation", [
           "• Renseignements du compte et de la famille : jusqu'à la suppression de votre compte. Les comptes inutilisés pendant 24 mois peuvent être supprimés après un avis par courriel.",
+          "• Calendrier des rappels : jusqu'au retrait par le praticien ou à la suppression de votre compte.",
           "• Rendez-vous : tant que votre compte existe. Lorsque vous supprimez votre compte, les rendez-vous à venir sont annulés et les rendez-vous passés sont dépersonnalisés (nom, courriel, téléphone et notes retirés), sauf les dossiers qu'une clinique doit conserver en vertu de la loi.",
           "• Registre d'envoi des courriels : 90 jours. Avis dans l'application : 180 jours. Signalements anonymes d'achalandage : 30 jours. Sessions de connexion : 30 jours. Codes de vérification : 10 minutes. Journaux d'accès du personnel : 1 an.",
           "Lorsque des renseignements ne sont plus nécessaires, ils sont supprimés de façon sécuritaire ou anonymisés."]],

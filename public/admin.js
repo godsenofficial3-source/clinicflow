@@ -15,7 +15,7 @@
 
   // ---------- insights ----------
   async function insights(M) {
-    const s = await api("GET", "/admin/stats");
+    const [s, { staff }] = await Promise.all([api("GET", "/admin/stats"), api("GET", "/admin/staff")]);
     const pct = (n) => (s.total ? Math.round((n / s.total) * 100) : 0);
     const bar = (label, n, color) => `<div class="hbar"><span>${label}</span><div><i style="width:${pct(n)}%;background:${color}"></i></div><b>${n} (${pct(n)}%)</b></div>`;
     return `<div class="kpis">
@@ -26,7 +26,7 @@
       <div class="kpi" style="--c:#C0392B"><b>${s.cancelled}</b><span>${t("cancellations")}</span></div></div>
       <div class="card stack"><h2>${t("how_patients_book")}</h2>${bar(t("src_online"), s.online, "#2F80ED")}${bar(t("src_phone"), s.phone, "#E0A100")}${bar(t("src_in_person"), s.in_person, "#8E44AD")}</div>
       <div class="card"><h2>${t("setup_checklist")}</h2><ul class="checklist">
-        ${[[M.providers.length > 0, "providers", "chk_providers"], [!!M.clinic.photo, "clinic", "chk_photo"], [M.clinic.accepting_online, "clinic", "chk_online"], [true, "staff", "chk_staff"], [true, "templates", "chk_templates"]]
+        ${[[M.providers.some((p) => p.active && p.avail.length), "providers", "chk_providers"], [!!M.clinic.photo, "clinic", "chk_photo"], [M.clinic.accepting_online, "clinic", "chk_online"], [staff.some((u) => u.id !== S.user.id), "staff", "chk_staff"], [M.templates.some((x) => x.reviewed_at), "templates", "chk_templates"]]
           .map(([ok, tab, k]) => `<li class="${ok ? "ok" : ""}">${I(ok ? "check" : "info")} <a href="#/admin?tab=${tab}">${t(k)}</a></li>`).join("")}</ul></div>`;
   }
 
@@ -84,22 +84,29 @@
   on("del-block", async (el) => { await api("DELETE", `/admin/blocks/${el.dataset.id}`); reload(); });
 
   // ---------- staff & roles ----------
-  async function staff() {
+  async function staff(M) {
     const { staff } = await api("GET", "/admin/staff");
-    const roles = ["reception", "nurse", "admin"];
+    const roles = ["reception", "nurse", "practitioner", "admin"];
+    const roleOptions = (selected) => roles.map((role) => `<option value="${role}" ${role === selected ? "selected" : ""}>${t("role_" + role)}</option>`).join("");
+    const providers = (selected) => `<option value="">${t("none")}</option>` + M.providers.filter((p) => p.active || p.id === selected)
+      .map((p) => `<option value="${p.id}" ${p.id === selected ? "selected" : ""}>${esc(p.name)}</option>`).join("");
     return `<div class="card"><h2>${t("staff_roles")}</h2><p class="hint">${t("staff_roles_d")}</p>
       <div class="table-wrap"><table class="table"><thead><tr><th>${t("full_name")}</th><th>${t("email")}</th><th>${t("role")}</th><th><span class="sr-only">${t("actions")}</span></th></tr></thead><tbody>
       ${staff.map((u) => `<tr><td><b>${esc(u.first_name)} ${esc(u.last_name)}</b>${u.id === S.user.id ? ` <span class="muted small">(${t("you")})</span>` : ""}</td><td>${esc(u.email)}</td>
-        <td><label class="sr-only" for="r${u.id}">${t("role")}</label><select id="r${u.id}" data-change="set-role" data-id="${u.id}" ${u.id === S.user.id ? "disabled" : ""}>${roles.map((r) => `<option value="${r}" ${u.staff_role === r ? "selected" : ""}>${t("role_" + r)}</option>`).join("")}</select></td>
+        <td>${u.id === S.user.id ? t("role_admin") : `<form data-form="set-role" data-id="${u.id}" class="stack">
+          <label class="sr-only" for="r${u.id}">${t("role")}</label><select id="r${u.id}" name="staff_role">${roleOptions(u.staff_role)}</select>
+          <label for="staff-provider-${u.id}" class="small">${t("staff_provider")}</label><select id="staff-provider-${u.id}" name="provider_id">${providers(u.provider_id)}</select>
+          <button class="btn sm" type="submit">${t("save")}</button></form>`}</td>
         <td>${u.id === S.user.id ? "" : `<button class="btn sm ghost danger-text" data-act="del-staff" data-id="${u.id}" aria-label="${esc(t("remove") + " " + u.first_name)}">${I("trash")}</button>`}</td></tr>`).join("")}</tbody></table></div>
       <dl class="role-help">${roles.map((r) => `<div><dt>${t("role_" + r)}</dt><dd>${t("role_" + r + "_d")}</dd></div>`).join("")}</dl></div>
       <form data-form="adm-staff" class="card stack"><h2>${I("plus")} ${t("add_staff")}</h2>
         <div class="grid2">${CF.field("first_name", t("first_name"), { required: true })}${CF.field("last_name", t("last_name"))}</div>
         <div class="grid2">${CF.field("email", t("email"), { type: "email", required: true, auto: "off" })}${CF.field("password", t("temp_password"), { type: "text", required: true, attrs: 'minlength="8"', hint: t("temp_password_hint") })}</div>
-        <div class="field"><label for="nsr">${t("role")}</label><select id="nsr" name="staff_role">${roles.map((r) => `<option value="${r}">${t("role_" + r)}</option>`).join("")}</select></div>
+        <div class="grid2"><div class="field"><label for="nsr">${t("role")}</label><select id="nsr" name="staff_role">${roleOptions("reception")}</select></div>
+          <div class="field"><label for="new-staff-provider">${t("staff_provider")}</label><select id="new-staff-provider" name="provider_id">${providers()}</select></div></div>
         <button class="btn primary" type="submit">${t("add_staff")}</button></form>`;
   }
-  on("set-role", async (el) => { await api("PATCH", `/admin/staff/${el.dataset.id}`, { staff_role: el.value }); CF.toast(t("saved")); });
+  onForm("set-role", async (d, form) => { await api("PATCH", `/admin/staff/${form.dataset.id}`, d); CF.toast(t("saved")); reload(); });
   on("del-staff", async (el) => { if (await CF.confirm(t("remove_staff_q"), { danger: true, ok: t("remove") })) { await api("DELETE", `/admin/staff/${el.dataset.id}`); reload(); } });
   onForm("adm-staff", async (d) => { await api("POST", "/admin/staff", d); CF.toast(t("staff_added")); reload(); });
 

@@ -27,7 +27,7 @@
       <div class="row between small"><a href="#/forgot">${t("forgot_password")}</a><a href="#/register">${t("create_account")}</a></div>
     </form>
     ${S.config.samples ? `<details class="demo-accounts"><summary>${t("demo_accounts")}</summary>
-      <ul>${[["patient@demo.ca", "role_patient", "2468"], ["staff@demo.ca", "role_reception"], ["nurse@demo.ca", "role_nurse"], ["admin@demo.ca", "role_admin"]].map(([e, r, pin]) =>
+      <ul>${[["patient@demo.ca", "role_patient", "2468"], ["staff@demo.ca", "role_reception"], ["nurse@demo.ca", "role_nurse"], ...(S.config.demoPractitioner ? [["doctor@demo.ca", "role_practitioner"]] : []), ["admin@demo.ca", "role_admin"]].map(([e, r, pin]) =>
         `<li><button class="link" data-act="demo-fill" data-email="${e}">${e}</button> · ${t(r)}${pin ? ` · ${t("account_password")}: <code>${pin}</code>` : ""}</li>`).join("")}</ul>
       <p class="small muted">${t("demo_password")}: <code>Demo1234!</code></p></details>` : ""}
     <hr/><p class="small">${I("building")} ${t("clinic_q")} <a href="#/clinic-signup">${t("clinic_signup_link")}</a></p>`) });
@@ -43,12 +43,28 @@
     ${demoBanner()}
     <form data-form="verify" class="stack">${CF.field("code", t("code_6"), { required: true, auto: "one-time-code", attrs: 'inputmode="numeric" maxlength="6" autofocus pattern="[0-9]*"' })}
       <button class="btn primary block" type="submit">${t("verify")}</button></form>
-    <p class="small muted">${t("check_spam")}</p>
-    <button class="btn sm ghost" data-act="resend">${I("mail")} ${t("send_new_code")}</button>`) });
+    <p class="small muted">${t("code_timing")} ${t("check_spam")}</p>
+    <button class="btn sm ghost" data-act="resend" data-cooldown>${I("mail")} <span>${t("send_new_code")}</span></button>`), after: codeCooldown });
+  // Wait 30 s before offering another email, so people don't ask again while the first one is on its way.
+  let cooldownTimer;
+  function codeCooldown() {
+    if (!pending.sentAt) pending.sentAt = Date.now();
+    clearInterval(cooldownTimer);
+    const tick = () => {
+      const btn = document.querySelector("[data-cooldown]");
+      if (!btn) return clearInterval(cooldownTimer);
+      const left = Math.ceil((pending.sentAt + 30000 - Date.now()) / 1000);
+      btn.disabled = left > 0;
+      btn.querySelector("span").textContent = left > 0 ? t("resend_in", { n: left }) : t("send_new_code");
+      if (left <= 0) clearInterval(cooldownTimer);
+    };
+    tick(); cooldownTimer = setInterval(tick, 1000);
+  }
   onForm("verify", async (d) => afterAuth(await api("POST", "/auth/verify", d)));
   on("resend", async (el) => {
-    try { pending = { ...pending, ...(await api("POST", "/auth/send-code", {})) }; CF.render(); CF.toast(t("code_resent")); }
-    catch (e) { CF.toast(CF.errMsg(e), "err"); }
+    el.disabled = true;
+    try { pending = { ...pending, ...(await api("POST", "/auth/send-code", {})), sentAt: Date.now() }; CF.render(); CF.toast(t("code_resent")); }
+    catch (e) { el.disabled = false; CF.toast(CF.errMsg(e), "err"); }
   });
 
   route("/register", { title: "create_account", guestOnly: true, render: () => authShell(t("create_account"), t("register_sub"), `
@@ -110,9 +126,11 @@
         <div class="row gap wrap actions">
           <a class="btn sm" href="${CF.mapsUrl(a.clinic)}" target="_blank" rel="noopener">${I("nav")} ${t("directions")}<span class="sr-only"> (${t("opens_new")})</span></a>
           <a class="btn sm ghost" href="tel:${esc(a.clinic.phone)}">${I("phone")} ${t("call_clinic")}</a>
-          ${full ? `<button class="btn sm ghost" data-act="resched" data-id="${a.id}">${I("cal")} ${t("reschedule")}</button>
-          <button class="btn sm ghost danger-text" data-act="cancel-appt" data-id="${a.id}">${I("x")} ${t("cancel")}</button>` : `<a class="btn sm ghost" href="#/appointments">${t("manage")}</a>`}
+          ${full && a.can_reschedule_online ? `<button class="btn sm ghost" data-act="resched" data-id="${a.id}">${I("cal")} ${t("reschedule")}</button>` : ""}
+          ${full && a.can_change_online ? `<button class="btn sm ghost danger-text" data-act="cancel-appt" data-id="${a.id}">${I("x")} ${t("cancel")}</button>` : ""}
+          ${full ? "" : `<a class="btn sm ghost" href="#/appointments">${t("manage")}</a>`}
         </div>
+        ${full && !a.can_reschedule_online ? `<p class="small muted">${t("call_to_change")}</p>` : ""}
         <p class="small muted">${I("pin")} ${esc(a.clinic.address)}, ${esc(a.clinic.city)}</p>
       </div></article>`;
   };
@@ -163,8 +181,8 @@
       ${waitlist.filter((w) => w.status === "offered").map(offerCard).join("")}
       <h2 class="section-title">${t("upcoming")} <span class="count">${upcoming.length}</span></h2>
       ${upcoming.length ? upcoming.map((a) => apptCard(a, { full: true })).join("") : `<div class="card">${CF.empty("cal", t("no_upcoming"))}</div>`}
-      ${waitlist.length ? `<h2 class="section-title">${t("my_waitlists")}</h2><div class="card"><ul class="plain-list">${waitlist.map((w) => `<li class="row between wrap">
-        <div><b>${esc(w.clinic_name)}</b> · ${w.date ? esc(CF.relDay(w.date)) : t("any_day")} ${w.provider_name ? "· " + esc(w.provider_name) : ""}
+      ${waitlist.length ? `<h2 class="section-title">${t("my_waitlists")}</h2><div class="card"><p class="small muted">${I("info")} ${t("waitlist_explain")}</p><ul class="plain-list">${waitlist.map((w) => `<li class="row between wrap">
+        <div><b>${esc(w.clinic_name)}</b> · ${w.date ? esc(CF.fmtDate(w.date)) : t("any_day")} ${w.provider_name ? "· " + esc(w.provider_name) : ""}
           <p class="small muted">${w.status === "offered" ? t("offer_waiting") : t("waitlist_position", { n: w.position })}</p></div>
         <button class="btn sm ghost" data-act="wl-leave" data-id="${w.id}">${t("leave")}</button></li>`).join("")}</ul></div>` : ""}
       <details class="past"><summary><h2 class="section-title inline">${t("past")} <span class="count">${past.length}</span></h2></summary>
@@ -180,6 +198,7 @@
   on("resched", async (el) => {
     const { upcoming } = await api("GET", "/my/appointments");
     const a = upcoming.find((x) => x.id === Number(el.dataset.id));
+    if (!a?.can_reschedule_online) { CF.toast(t("call_to_change"), "err"); CF.refresh(); return; }
     W = newWizard();
     Object.assign(W, { reschedule: a, member_id: a.member_id, clinic: { id: a.clinic_id, name: a.clinic.name }, type: a.type, provider_id: a.provider_id, step: "time" });
     W.clinic = (await api("GET", `/clinics/${a.clinic_id}`)).clinic;
@@ -257,6 +276,7 @@
 
   async function stepTime() {
     const c = W.clinic, ty = W.type;
+    if (!c.accepting_online) return `<div class="card">${CF.empty("cal", t("err_online_closed"))}</div>`;
     const qs = `type=${ty.id}${W.provider_id ? `&provider=${W.provider_id}` : ""}`;
     const { days } = await api("GET", `/clinics/${c.id}/days?days=21&${qs}`);
     const visible = days.filter((d) => W.days.includes(CF.toDate(d.date + " 00:00").getDay()));
@@ -273,22 +293,56 @@
         <fieldset><legend class="label">${t("time_of_day")}</legend><div class="check-pills">${["am", "pm", "eve"].map((k) =>
           `<label class="pill"><input type="checkbox" data-change="wiz-tod" value="${k}" ${W.tod.includes(k) ? "checked" : ""}/><span>${t("tod_" + k)}</span></label>`).join("")}</div></fieldset>
       </div>
-      <div class="date-strip" role="radiogroup" aria-label="${esc(t("choose_date"))}">${visible.map((d) => `<button role="radio" aria-checked="${d.date === W.date}" class="date-btn avail-${avail(d.count)}" data-act="wiz-date" data-d="${d.date}" ${d.count ? "" : 'aria-disabled="true"'}>
+      <div class="date-strip" role="radiogroup" aria-label="${esc(t("choose_date"))}">${visible.map((d) => `<button role="radio" aria-checked="${d.date === W.date}" class="date-btn avail-${avail(d.count)}" data-act="wiz-date" data-d="${d.date}">
         <span>${esc(CF.fmtDate(d.date, { weekday: "short" }))}</span><b>${CF.toDate(d.date + " 00:00").getDate()}</b><small>${d.count ? t("n_free", { n: d.count }) : t("full")}</small></button>`).join("")}</div>
       <p class="legend small"><span class="lg many"></span>${t("many_slots")} <span class="lg few"></span>${t("few_slots")} <span class="lg none"></span>${t("no_slots")}</p>
       <h2 class="section-title">${esc(CF.fmtDate(W.date))}</h2>
       ${uniq.length ? `<div class="slots" role="list">${uniq.map((s) => `<button class="slot" role="listitem" data-act="pick-slot" data-s="${s.start}" data-p="${s.provider_id}">${esc(CF.fmtTime(s.start))}${W.provider_id ? "" : `<small>${esc(s.provider_name.replace("Dr. ", "Dr "))}</small>`}</button>`).join("")}</div>`
-        : `<div class="card">${CF.empty("hourglass", t("day_full"), `<button class="btn primary" data-act="join-wl">${I("hourglass")} ${t("join_waitlist")}</button>`)}</div>`}
-      ${uniq.length ? `<p class="small muted">${t("none_fit")} <button class="link" data-act="join-wl">${t("join_waitlist")}</button></p>` : ""}`;
+        : `<div class="card">${CF.empty("hourglass", t("day_full"))}</div>`}
+      ${W.reschedule ? "" : `<div class="notice info"><div><p>${t("waitlist_day_scope", { date: esc(CF.fmtDate(W.date)) })}</p>
+        <button class="btn sm" data-act="join-wl">${I("hourglass")} ${t("join_waitlist")}</button></div></div>`}`;
   }
   on("wiz-day", (el) => { const d = Number(el.value); W.days = el.checked ? [...W.days, d] : W.days.filter((x) => x !== d); if (!W.days.length) W.days = [d]; CF.render({ quiet: true }); });
   on("wiz-tod", (el) => { W.tod = el.checked ? [...W.tod, el.value] : W.tod.filter((x) => x !== el.value); if (!W.tod.length) W.tod = [el.value]; CF.render({ quiet: true }); });
-  on("wiz-date", (el) => { if (el.getAttribute("aria-disabled") === "true") return; W.date = el.dataset.d; CF.render({ quiet: true }).then(() => document.querySelector(`[data-d="${W.date}"]`)?.focus()); });
+  on("wiz-date", (el) => { W.date = el.dataset.d; CF.render({ quiet: true }).then(() => document.querySelector(`[data-d="${W.date}"]`)?.focus()); });
   on("pick-slot", (el) => { W.slot = { start: el.dataset.s, provider_id: Number(el.dataset.p) }; next(); });
   on("join-wl", async () => {
-    await api("POST", "/waitlist", { clinic_id: W.clinic.id, provider_id: W.provider_id || null, type_id: W.type?.id, date: W.date, member_id: W.member_id });
-    CF.toast(t("waitlist_joined")); W = newWizard(); CF.go("/appointments");
+    try {
+      await api("POST", "/waitlist", { clinic_id: W.clinic.id, provider_id: W.provider_id || null, type_id: W.type?.id, date: W.date, member_id: W.member_id });
+      CF.toast(t("waitlist_joined")); W = newWizard(); CF.go("/appointments");
+    } catch (e) { CF.toast(CF.errMsg(e), "err"); }
   });
+
+  const calendar = { date: "", days: 7 };
+  function careDate(date, offset) {
+    const d = CF.toDate(date + " 12:00");
+    d.setDate(d.getDate() + offset);
+    return CF.ymd(d);
+  }
+  route("/care-reminders", { title: "nav_care", roles: ["patient"], live: true, render: async () => {
+    const { from, days, timezone, events } = await api("GET", `/my/care-reminders?days=${calendar.days}${calendar.date ? "&from=" + encodeURIComponent(calendar.date) : ""}`);
+    calendar.date = from;
+    const dateCards = Array.from({ length: days }, (_, i) => careDate(from, i)).map((date) => {
+      const scheduled = events.filter((event) => event.date === date);
+      return `<section class="card"><h2>${esc(CF.fmtDate(date))}</h2>
+        ${scheduled.length ? `<ul class="plain-list">${scheduled.map((event) => `<li class="row gap wrap"><b>${esc(CF.fmtTime(event.time))}</b>
+          <span>${t("care_" + event.kind)} ${event.label} · ${esc(event.patient)} · ${esc(event.clinic)}</span></li>`).join("")}</ul>` :
+        `<p class="small muted">${t("care_empty_day")}</p>`}</section>`;
+    });
+    return `<section class="page narrow stack">
+      <h1>${t("nav_care")}</h1><p class="muted">${t("care_patient_hint")} ${t("care_timezone", { zone: esc(timezone) })}</p>
+      <div class="row gap wrap">
+        <button class="btn sm" data-act="care-shift" data-step="-1">${t("previous")}</button>
+        <button class="btn sm" data-act="care-shift" data-step="0">${t("today")}</button>
+        <button class="btn sm" data-act="care-shift" data-step="1">${t("next")}</button>
+        <input type="date" value="${from}" aria-label="${esc(t("choose_date"))}" data-change="care-date"/>
+        <button class="btn sm" aria-pressed="${days === 1}" data-act="care-view" data-days="1">${t("view_day")}</button>
+        <button class="btn sm" aria-pressed="${days === 7}" data-act="care-view" data-days="7">${t("view_week")}</button>
+      </div>${dateCards.join("")}</section>`;
+  } });
+  on("care-shift", (el) => { const step = Number(el.dataset.step); calendar.date = step ? careDate(calendar.date, step * calendar.days) : ""; CF.refresh(); });
+  on("care-date", (el) => { if (el.value) { calendar.date = el.value; CF.refresh(); } });
+  on("care-view", (el) => { calendar.days = Number(el.dataset.days); CF.refresh(); });
 
   async function stepConfirm() {
     const c = W.clinic, ty = W.type || W.reschedule?.type, prov = c.providers.find((p) => p.id === W.slot.provider_id);

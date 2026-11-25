@@ -153,7 +153,7 @@
     wrap.innerHTML = `<div class="modal-backdrop" data-act="modal-close"></div>
       <div class="modal ${wide ? "wide" : ""}" role="dialog" aria-modal="true" aria-labelledby="${id}">
         <div class="modal-head"><h2 id="${id}">${title}</h2><button class="icon-btn" data-act="modal-close" aria-label="${esc(t("close"))}">${I("x")}</button></div>
-        <div class="modal-body">${body}</div></div>`;
+        <div class="modal-body"${side ? ' tabindex="0"' : ""}>${body}</div></div>`;
     document.getElementById("modal-root").appendChild(wrap);
     const close = () => { wrap.remove(); modalStack = modalStack.filter((m) => m.wrap !== wrap); onClose && onClose(); prev && prev.focus && prev.focus(); };
     modalStack.push({ wrap, close });
@@ -243,7 +243,7 @@
     if (!u) return [];
     if (u.role === "patient") return [
       ["/home", "home", "nav_home"], ["/book", "plus", "nav_book"], ["/appointments", "cal", "nav_appointments"],
-      ["/todo", "todo", "nav_todo", S.unread.forms], ["/messages", "msg", "nav_messages", S.unread.messages], ["/clinics", "building", "nav_clinics"], ["/account", "user", "nav_account"]];
+      ["/care-reminders", "bell", "nav_care"], ["/todo", "todo", "nav_todo", S.unread.forms], ["/messages", "msg", "nav_messages", S.unread.messages], ["/clinics", "building", "nav_clinics"], ["/account", "user", "nav_account"]];
     const items = [["/staff/today", "queue", "nav_today"], ["/staff/schedule", "cal", "nav_schedule"], ["/staff/book", "plus", "nav_staff_book"],
       ["/staff/waitlist", "hourglass", "nav_waitlist"], ["/staff/messages", "msg", "nav_messages", S.unread.messages]];
     if (u.role === "admin") items.push(["/admin", "settings", "nav_admin"]);
@@ -266,11 +266,17 @@
     const items = CF.navItems();
     const link = (it, cls) => `<a href="#${it[0]}" class="${cls} ${path.startsWith(it[0]) ? "active" : ""}" ${path.startsWith(it[0]) ? 'aria-current="page"' : ""}>${I(it[1])}<span>${t(it[2])}</span>${it[3] ? `<span class="badge" aria-label="${esc(t("n_new", { n: it[3] }))}">${it[3]}</span>` : ""}</a>`;
     document.getElementById("sidenav").innerHTML = items.map((it) => link(it, "nav-link")).join("");
-    const tabs = S.user?.role === "patient" ? items.filter((i) => ["/home", "/book", "/appointments", "/todo", "/messages"].includes(i[0])) : items.slice(0, 5);
+    // Phone tab bar: 4 shortcuts + "More" (short labels so nothing wraps mid-word; More shows the hidden badges).
+    const hiddenBadges = items.slice(4).reduce((n, it) => n + (Number(it[3]) || 0), 0);
+    const short = (it) => [it[0], it[1], t("tab_" + it[2]) !== "tab_" + it[2] ? "tab_" + it[2] : it[2], it[3]];
+    const tabs = u ? [...items.slice(0, 4).map(short), ["/more", "menu", "nav_more", hiddenBadges || 0]] : [];
     document.getElementById("tabbar").innerHTML = tabs.map((it) => link(it, "tab")).join("");
     document.querySelector(".skip-link").textContent = t("skip");
     CF.renderFooter && CF.renderFooter();
   };
+  CF.route("/more", { title: "nav_more", roles: ["patient", "staff", "admin"], render: () =>
+    `<section class="page narrow"><h1>${t("nav_more")}</h1><div class="card">${CF.navItems().map(([path, icon, title, badge]) =>
+      `<a class="nav-link" href="#${path}">${I(icon)} ${t(title)}${badge ? `<span class="badge">${badge}</span>` : ""}</a>`).join("")}</div></section>` });
 
   CF.on("lang", async () => {
     S.lang = S.lang === "fr" ? "en" : "fr";
@@ -294,11 +300,13 @@
     const { notifications } = await CF.api("GET", "/my/notifications");
     CF.modal(t("notifications"), notifications.length ? `<ul class="notif-list">${notifications.map((n) =>
       `<li class="${n.read ? "" : "unread"}"><b>${esc(n.title)}</b><p>${esc(n.body)}</p><time>${esc(CF.fmtShort(n.created_at))} · ${esc(CF.fmtTime(n.created_at))}</time>
-        ${n.kind === "waitlist_offer" ? `<button class="btn sm primary" data-act="go" data-to="/appointments">${t("see_offer")}</button>` : ""}</li>`).join("")}</ul>` : CF.empty("bell", t("no_notifications")), { side: true });
+        ${n.kind === "waitlist_offer" ? `<button class="btn sm primary" data-act="notice-go" data-to="/appointments">${t("see_offer")}</button>` : ""}
+        ${n.kind === "care" ? `<button class="btn sm primary" data-act="notice-go" data-to="/care-reminders">${t("nav_care")}</button>` : ""}</li>`).join("")}</ul>` : CF.empty("bell", t("no_notifications")), { side: true });
     await CF.api("POST", "/my/notifications/read");
     S.unread.notifications = 0;
     CF.renderChrome((location.hash.slice(1) || "/").split("?")[0]);
   });
+  CF.on("notice-go", (el) => { CF.closeModal(); CF.go(el.dataset.to); });
 
   // ---------- accessibility ----------
   CF.applyA11y = () => {
