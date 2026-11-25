@@ -17,6 +17,7 @@ const { setupClinicDefaults, seed, ymd, hm } = require("./db");
 const { hashSecret, verifySecret, newToken, newCode, sha256 } = require("./security");
 const notify = require("./notify");
 const { estimate, load, toDate } = require("./estimates");
+const { daysAfter, occurrences } = require("./care");
 
 // Version of the Terms / Privacy / Cookie documents (single source of truth: public/legal-text.js)
 const LEGAL_VERSION = fs.readFileSync(path.join(__dirname, "..", "public", "legal-text.js"), "utf8").match(/LEGAL_VERSION = "([^"]+)"/)[1];
@@ -49,11 +50,12 @@ const nowStr = () => { const d = new Date(); return `${ymd(d)} ${hm(d.getHours()
 const addMin = (s, m) => { const d = new Date(toDate(s).getTime() + m * 60000); return `${ymd(d)} ${hm(d.getHours() * 60 + d.getMinutes())}`; };
 const toMin = (t) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
 const N = (v) => (v === null || v === undefined || v === "" ? null : Number(v));
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const userLang = (u) => (u && u.lang === "fr" ? "fr" : "en");
 const userByEmail = (e) => S.find("users", (u) => u.email === String(e || "").toLowerCase().trim());
 const statusOf = (clinicId, key) => S.find("statuses", (s) => s.clinic_id === clinicId && s.key === key);
 const clinicName = (id) => S.get("clinics", id)?.name || "";
-const publicUser = (u) => u && ({ id: u.id, email: u.email, phone: u.phone, role: u.role, clinic_id: u.clinic_id, staff_role: u.staff_role,
+const publicUser = (u) => u && ({ id: u.id, email: u.email, phone: u.phone, role: u.role, clinic_id: u.clinic_id, staff_role: u.staff_role, provider_id: u.provider_id || null,
   first_name: u.first_name, last_name: u.last_name, lang: u.lang, twofa: u.twofa, has_pin: !!u.account_pin_hash,
   email_verified: !!u.email_verified, notify_pref: u.notify_pref, consent_version: u.consent_version || null, consent_at: u.consent_at || null,
   staff_agreement_version: u.staff_agreement_version || null, legal_version: LEGAL_VERSION });
@@ -126,8 +128,11 @@ setInterval(() => { const now = Date.now(); for (const [k, v] of hits) if (!v.so
 // 6-digit codes, emailed for real. Kept in memory only (never written to the database).
 const codes = new Map();
 async function sendCode(user, purpose) {
-  const code = newCode();
-  codes.set(`${user.id}:${purpose}`, { hash: sha256(code), expires: Date.now() + 10 * 60000, attempts: 0 });
+  const key = `${user.id}:${purpose}`, previous = codes.get(key);
+  const entry = previous && previous.expires > Date.now() ? previous : { code: newCode(), expires: Date.now() + 10 * 60000, attempts: 0 };
+  if (entry.attempts >= 5) throw new Error("code_locked");
+  codes.set(key, entry);
+  const { code } = entry;
   const fr = userLang(user) === "fr";
   const r = await notify.send({ to: user.email, lang: userLang(user), code,
     subject: fr ? "Votre code ClinicFlow" : "Your ClinicFlow code",
@@ -140,7 +145,7 @@ function checkCode(userId, purpose, code) {
   const k = `${userId}:${purpose}`, c = codes.get(k);
   if (!c || c.expires < Date.now()) return "code_expired";
   if (c.attempts >= 5) return "too_many_attempts";
-  if (c.hash !== sha256(String(code).trim())) { c.attempts++; return "code_wrong"; }
+  if (sha256(c.code) !== sha256(String(code).trim())) { c.attempts++; return "code_wrong"; }
   codes.delete(k);
   return null;
 }
@@ -148,6 +153,7 @@ const mask = (s = "") => s.replace(/^(.).*(@.*)$/, "$1•••$2");
 
 app.get("/api/config", (req, res) => {
   res.json({ demoMode: notify.demoMode(), storage: S.mode, samples: S.count("users", (u) => u.email === "patient@demo.ca") > 0,
+    demoPractitioner: !!S.find("users", (u) => u.email === "doctor@demo.ca" && u.staff_role === "practitioner"),
     legalVersion: LEGAL_VERSION, privacyEmail: process.env.PRIVACY_EMAIL || process.env.GMAIL_USER || "" });
 });
 
@@ -155,7 +161,7 @@ app.post("/api/auth/register", rate("register", 5, 60), wrap(async (req, res) =>
   const { first_name, last_name, email, phone, password, lang = "en" } = req.body || {};
   if (!first_name || !email || !password) return err(res, 400, "missing_fields");
   if (req.body.accept_terms !== true || req.body.accept_privacy !== true) return err(res, 400, "consent_required");
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).trim())) return err(res, 400, "bad_email");
+  if (!emailPattern.test(String(email).trim())) return err(res, 400, "bad_email");
   if (String(password).length < 8) return err(res, 400, "weak_password");
   if (userByEmail(email)) return err(res, 409, "email_taken");
   const user = S.insert("users", { email: email.toLowerCase().trim(), phone: phone || null, password_hash: hashSecret(password), role: "patient", clinic_id: null, staff_role: null,
@@ -273,29 +279,37 @@ app.post("/api/me/staff-agreement", auth("staff", "admin"), (req, res) => res.js
 // Right of access / portability: everything we hold about you, as a file.
 app.get("/api/me/export", auth(), rate("export", 10, 60), (req, res) => {
   const u = req.user, strip = ({ password_hash, account_pin_hash, ...rest }) => rest;
-  const appts = S.filter("appointments", (a) => a.user_id === u.id).map((a) => ({ ...a, clinic: clinicName(a.clinic_id), provider: S.get("providers", a.provider_id)?.name }));
+  const appts = S.filter("appointments", (a) => a.user_id === u.id).map(({ staff_notes, ...a }) => ({ ...a, clinic: clinicName(a.clinic_id), provider: S.get("providers", a.provider_id)?.name }));
   const ids = new Set(appts.map((a) => a.id));
   res.set("Content-Disposition", "attachment; filename=clinicflow-my-data.json");
   res.json({ exported_at: S.nowStamp(), notice: "Personal information ClinicFlow holds about you. Passwords are stored only as encrypted hashes and are not included.",
     account: strip(u), family_members: membersOf(u.id), appointments: appts,
     forms: S.filter("forms", (f) => ids.has(f.appointment_id)).map(formOut), waitlist: S.filter("waitlist", (w) => w.user_id === u.id),
     messages: S.filter("messages", (m) => m.user_id === u.id), saved_clinics: S.filter("saved_clinics", (x) => x.user_id === u.id).map((x) => clinicName(x.clinic_id)),
+    care_reminders: S.filter("care_reminders", (r) => r.user_id === u.id),
     notifications: S.filter("notifications", (n) => n.user_id === u.id), consents: S.filter("consents", (c) => c.user_id === u.id) });
 });
 // Right to deletion / withdrawal of consent.
-app.post("/api/me/delete", auth("patient"), rate("delete", 5, 60), (req, res) => {
+app.post("/api/me/delete", auth("patient"), rate("delete", 5, 60), async (req, res) => {
   const u = req.user;
   if (!verifySecret(req.body?.password || "", u.password_hash)) return err(res, 401, "bad_password");
   const now = nowStr();
+  const freed = [];
   for (const a of S.filter("appointments", (x) => x.user_id === u.id)) {
-    const future = a.start > now && !["cancelled", "completed", "no_show"].includes(a.status);
+    const result = await S.schedule({ clinicId: a.clinic_id, date: a.start.slice(0, 10), appointmentId: a.id }, ({ appointment }) => {
+      if (appointment?.user_id !== u.id) return {};
+      const future = appointment.start > now && !finalStatuses.includes(appointment.status);
+      const value = revised(appointment, { user_id: null, member_id: null, patient_record_id: null, anonymized: true,
+        patient_name: future ? "Cancelled – account deleted" : "Deleted user", patient_email: null, patient_phone: null, reason: "",
+        staff_notes: "", notify_pref: "app", ...(future ? { status: "cancelled" } : {}) });
+      return { future, value, writes: [{ collection: "appointments", value }] };
+    });
     S.filter("forms", (f) => f.appointment_id === a.id).forEach((f) => S.update("forms", f.id, { answers: "{}" }));
-    S.update("appointments", a.id, { user_id: null, member_id: null, patient_name: future ? "Cancelled – account deleted" : "Deleted user", patient_email: null, patient_phone: null, reason: "",
-      notify_pref: "app", ...(future ? { status: "cancelled" } : {}) });
-    if (future) { pushClinic(a.clinic_id, { type: "appointments" }); offerToWaitlist(a.clinic_id, a.provider_id, a.start); }
+    if (result.future) { pushClinic(a.clinic_id, { type: "appointments" }); freed.push(result.value); }
   }
-  for (const col of ["family_members", "saved_clinics", "notifications", "messages", "waitlist", "sessions", "consents"]) S.removeWhere(col, (x) => x.user_id === u.id);
+  for (const col of ["family_members", "saved_clinics", "notifications", "messages", "waitlist", "sessions", "consents", "care_reminders"]) S.removeWhere(col, (x) => x.user_id === u.id);
   S.remove("users", u.id);
+  freed.forEach(offerFreedTime);
   res.json({ ok: true });
 });
 
@@ -306,24 +320,39 @@ function clinicOpenNow(c) {
   const t = hm(new Date().getHours() * 60 + new Date().getMinutes());
   return t >= h[0] && t < h[1];
 }
-function slotsFor(clinicId, date, { providerId = null, typeId = null, ignoreId = null } = {}) {
+const validDay = (date) => typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date) && ymd(toDate(date + " 00:00")) === date;
+const validTime = (time) => typeof time === "string" && /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(time);
+const validStart = (start) => typeof start === "string" && start.length === 16 && start[10] === " " && validDay(start.slice(0, 10)) && validTime(start.slice(11));
+const offerActive = (w) => w.status === "offered" && validStart(w.offer_start) && Date.now() < (w.offer_expires_at ?? toDate(w.offer_start).getTime());
+const waitlistOrder = (a, b) => (a.joined_at || toDate(a.created_at.slice(0, 16)).getTime()) -
+  (b.joined_at || toDate(b.created_at.slice(0, 16)).getTime()) || a.id - b.id;
+function slotsFor(clinicId, date, { providerId = null, typeId = null, ignoreId = null, ignoreOffer = null,
+  staff = false, duration = null, appointments, offers } = {}) {
   const clinic = S.get("clinics", clinicId);
-  if (!clinic || !date) return [];
+  if (!clinic || (!staff && !clinic.accepting_online) || !validDay(date)) return [];
   const type = typeId ? S.get("appt_types", typeId) : null;
-  const len = type && type.clinic_id === clinicId ? type.minutes : 15;
+  const len = duration ?? (type && type.clinic_id === clinicId ? type.minutes : 15);
   const step = clinic.slot_minutes || 15;
   const wd = toDate(`${date} 00:00`).getDay();
   if (date < ymd(new Date())) return [];
-  const minStart = date === ymd(new Date()) ? new Date().getHours() * 60 + new Date().getMinutes() + 30 : 0;
+  const hours = JSON.parse(clinic.hours || "{}")[wd];
+  if (!hours || !validTime(hours[0]) || !validTime(hours[1])) return [];
+  const minStart = date === ymd(new Date()) ? new Date().getHours() * 60 + new Date().getMinutes() + (staff ? 0 : 30) : 0;
+  const dayAppointments = appointments ?? S.filter("appointments", (a) => a.clinic_id === clinicId && a.start.slice(0, 10) === date);
+  const dayOffers = offers ?? S.filter("waitlist", (w) => w.clinic_id === clinicId && w.offer_start?.slice(0, 10) === date);
   const provs = S.filter("providers", (p) => p.clinic_id === clinicId && p.active && (!providerId || p.id === Number(providerId)));
   const out = [];
   for (const p of provs) {
     const windows = S.filter("availability", (a) => a.provider_id === p.id && a.weekday === wd);
-    const taken = S.filter("appointments", (a) => a.provider_id === p.id && a.start.slice(0, 10) === date && a.status !== "cancelled" && a.id !== ignoreId)
+    const taken = dayAppointments.filter((a) => a.provider_id === p.id && a.status !== "cancelled" && a.id !== ignoreId)
       .map((a) => [toMin(a.start.slice(11)), toMin(a.end.slice(11))]);
     S.filter("blocks", (b) => b.provider_id === p.id && b.date === date).forEach((b) => taken.push([toMin(b.start), toMin(b.end)]));
+    for (const w of dayOffers) if (w.id !== ignoreOffer && w.offer_provider_id === p.id && offerActive(w)) {
+      const start = toMin(w.offer_start.slice(11));
+      taken.push([start, start + (w.offer_minutes || S.get("appt_types", w.type_id)?.minutes || 15)]);
+    }
     for (const w of windows) for (let m = toMin(w.start); m + len <= toMin(w.end); m += step) {
-      if (m < minStart || taken.some(([s, e]) => m < e && m + len > s)) continue;
+      if (m < Math.max(minStart, toMin(hours[0])) || m + len > toMin(hours[1]) || taken.some(([s, e]) => m < e && m + len > s)) continue;
       out.push({ start: `${date} ${hm(m)}`, provider_id: p.id, provider_name: p.name });
     }
   }
@@ -368,8 +397,9 @@ app.post("/api/clinics/:id/save", auth("patient"), (req, res) => {
 });
 app.delete("/api/clinics/:id/save", auth("patient"), (req, res) => { S.removeWhere("saved_clinics", (x) => x.user_id === req.user.id && x.clinic_id === Number(req.params.id)); res.json({ saved: false }); });
 app.get("/api/clinics/:id/slots", (req, res) => {
-  const date = req.query.date || ymd(new Date());
-  res.json({ date, slots: slotsFor(Number(req.params.id), date, { providerId: N(req.query.provider), typeId: N(req.query.type) }) });
+  const date = req.query.date || ymd(new Date()), clinicId = Number(req.params.id), s = session(req);
+  const staff = s?.stage === "ok" && s.user.role !== "patient" && s.user.clinic_id === clinicId && s.user.staff_agreement_version === LEGAL_VERSION;
+  res.json({ date, slots: slotsFor(clinicId, date, { providerId: N(req.query.provider), typeId: N(req.query.type), staff }) });
 });
 app.get("/api/clinics/:id/days", (req, res) => {
   const days = [], d = new Date();
@@ -391,7 +421,7 @@ app.post("/api/clinics/register", rate("clinic-register", 3, 60), (req, res) => 
   if (userByEmail(b.admin_email)) return err(res, 409, "email_taken");
   const hours = JSON.stringify({ 1: ["09:00", "17:00"], 2: ["09:00", "17:00"], 3: ["09:00", "17:00"], 4: ["09:00", "17:00"], 5: ["09:00", "17:00"] });
   const c = S.insert("clinics", { name: b.name, address: b.address, city: b.city || "", postal: b.postal || "", phone: b.phone || "", email: b.email || b.admin_email,
-    description_en: b.description || "", description_fr: b.description || "", specialty: b.specialty || "family", photo: "", hours, cancel_hours: 24, slot_minutes: 15, accepting_online: 1 });
+    description_en: b.description || "", description_fr: b.description || "", specialty: b.specialty || "family", photo: "", hours, cancel_hours: 24, slot_minutes: 15, accepting_online: b.first_provider ? 1 : 0 });
   setupClinicDefaults(c.id);
   if (b.first_provider) {
     const p = S.insert("providers", { clinic_id: c.id, name: b.first_provider, title: "MD", specialty: b.specialty || "Family medicine", languages: "", bio_en: "", bio_fr: "", active: 1 });
@@ -412,6 +442,12 @@ function apptView(a) {
     type: a.type_id ? S.get("appt_types", a.type_id) : null, status_info: statusOf(a.clinic_id, a.status),
     forms: S.filter("forms", (f) => f.appointment_id === a.id).map(({ id, title_en, title_fr, status, due, staff_note }) => ({ id, title_en, title_fr, status, due, staff_note })) };
 }
+function patientApptView(a) {
+  const { staff_notes, patient_record_id, _v, ...view } = a.clinic ? a : apptView(a);
+  return view;
+}
+const finalStatuses = ["cancelled", "completed", "no_show"];
+const revised = (row, patch) => ({ ...row, ...patch, _v: (row._v || 0) + 1 });
 const TITLES = { confirmation: ["Appointment confirmed", "Rendez-vous confirmé"], cancellation: ["Appointment cancelled", "Rendez-vous annulé"],
   provider_change: ["Appointment changed", "Rendez-vous modifié"], reminder: ["Appointment reminder", "Rappel de rendez-vous"] };
 function bookingNotice(appt, user, key = "confirmation") {
@@ -423,47 +459,70 @@ function bookingNotice(appt, user, key = "confirmation") {
     notify.send({ to: appt.patient_email, subject: `${title} – ${appt.clinic.name}`, body, clinicId: appt.clinic_id, lang });
 }
 
-// Booking is checked and saved in one synchronous step, so two people can never get the same time (no double booking).
-function bookSlot({ clinicId, providerId, typeId, start, user, memberId, name, phone, email, notifyPref, reason, source }) {
+async function bookSlot({ clinicId, providerId, typeId, start, user, memberId, patientRecordId, name, phone, email, notifyPref, reason, source, offerId }) {
   const type = S.get("appt_types", typeId);
   if (!type || type.clinic_id !== clinicId) return { error: "bad_type" };
-  if (!start) return { error: "slot_taken" };
+  if (!validStart(start)) return { error: "slot_taken" };
   const date = start.slice(0, 10);
-  const candidates = providerId ? [Number(providerId)] : slotsFor(clinicId, date, { typeId }).filter((s) => s.start === start).map((s) => s.provider_id);
-  const pid = candidates.find((p) => slotsFor(clinicId, date, { providerId: p, typeId }).some((s) => s.start === start));
-  if (!pid) return { error: "slot_taken" };
-  const a = S.insert("appointments", { clinic_id: clinicId, provider_id: pid, type_id: typeId, user_id: user?.id || null, member_id: memberId || null, patient_name: name,
-    patient_phone: phone || null, patient_email: email || null, notify_pref: notifyPref || "email", reason: (reason || "").slice(0, 140), start, end: addMin(start, type.minutes),
+  const staff = source === "phone" || source === "in_person";
+  if (!staff && !S.get("clinics", clinicId)?.accepting_online) return { error: "online_closed" };
+  const a = S.newScheduleRecord("appointments", { clinic_id: clinicId, type_id: typeId, user_id: user?.id || null, member_id: memberId || null, patient_name: name,
+    patient_record_id: patientRecordId || null, patient_phone: phone || null, patient_email: email || null, notify_pref: notifyPref || "email", reason: String(reason || "").slice(0, 140), start,
     status: "booked", source: source || "online", staff_notes: "", checked_in_at: null, consult_at: null, completed_at: null, reminder_sent: 0 });
   const ft = S.filter("form_templates", (f) => f.clinic_id === clinicId).sort((x, y) => x.id - y.id)[0];
-  if (ft) S.insert("forms", { appointment_id: a.id, template_id: ft.id, title_en: ft.title_en, title_fr: ft.title_fr, fields: ft.fields, answers: "{}", status: "todo", staff_note: null, due: date });
-  return { appt: apptView(a) };
+  const form = ft && S.newScheduleRecord("forms", { appointment_id: a.id, template_id: ft.id, title_en: ft.title_en, title_fr: ft.title_fr, fields: ft.fields, answers: "{}", status: "todo", staff_note: null, due: date });
+  const result = await S.schedule({ clinicId, date, waitlistId: offerId }, ({ appointments, offers, waiting }) => {
+    if (offerId && (!waiting || !offerActive(waiting) || waiting.user_id !== user?.id || waiting.offer_start !== start)) return { error: "offer_expired" };
+    const duration = waiting?.offer_minutes || type.minutes;
+    const slot = slotsFor(clinicId, date, { providerId, typeId, staff, duration, ignoreOffer: offerId, appointments, offers }).find((s) => s.start === start);
+    if (!slot) return { error: "slot_taken" };
+    const appointment = { ...a, provider_id: slot.provider_id, end: addMin(start, duration) };
+    const writes = [{ collection: "appointments", value: appointment, insert: true }];
+    if (form) writes.push({ collection: "forms", value: form, insert: true });
+    if (waiting) writes.push({ collection: "waitlist", value: revised(waiting, { status: "booked" }) });
+    return { appointment, writes };
+  });
+  return result.error ? result : { appt: apptView(result.appointment) };
 }
 
-app.post("/api/appointments", auth("patient"), (req, res) => {
+app.post("/api/appointments", auth("patient"), async (req, res) => {
   const b = req.body || {}, u = req.user;
   const member = b.member_id ? S.find("family_members", (m) => m.id === Number(b.member_id) && m.user_id === u.id) : null;
   if (b.member_id && !member) return err(res, 400, "bad_member");
   const name = member ? `${member.first_name} ${member.last_name || ""}`.trim() : `${u.first_name} ${u.last_name}`.trim();
-  const r = bookSlot({ clinicId: Number(b.clinic_id), providerId: N(b.provider_id), typeId: Number(b.type_id), start: b.start, user: u, memberId: member?.id,
+  const r = await bookSlot({ clinicId: Number(b.clinic_id), providerId: N(b.provider_id), typeId: Number(b.type_id), start: b.start, user: u, memberId: member?.id,
     name, phone: b.phone || u.phone, email: b.email || u.email, notifyPref: b.notify_pref || u.notify_pref, reason: b.reason, source: "online" });
   if (r.error) return err(res, 409, r.error);
   bookingNotice(r.appt, u, "confirmation");
   changed(r.appt);
-  res.json({ appointment: r.appt });
+  res.json({ appointment: patientApptView(r.appt) });
 });
 
 app.get("/api/my/appointments", auth("patient"), (req, res) => {
-  const list = S.filter("appointments", (a) => a.user_id === req.user.id).sort((a, b) => a.start.localeCompare(b.start)).map(apptView);
+  const list = S.filter("appointments", (a) => a.user_id === req.user.id).sort((a, b) => a.start.localeCompare(b.start)).map(patientApptView);
   const now = nowStr(), today = ymd(new Date());
-  const upcoming = list.filter((a) => a.end >= now && !["cancelled", "completed", "no_show"].includes(a.status))
-    .map((a) => (a.start.slice(0, 10) === today || toDate(a.start) - Date.now() < 36 * 3600000 ? { ...a, estimate: estimate(a.clinic_id, a.type_id, a) } : a));
+  const upcoming = list.filter((a) => !finalStatuses.includes(a.status) && (a.end >= now || (a.start.slice(0, 10) === today && a.status !== "booked")))
+    .map((a) => ({ ...a, can_change_online: !canChange(req, a), can_reschedule_online: !canChange(req, a) && !!S.get("clinics", a.clinic_id)?.accepting_online,
+      ...(a.start.slice(0, 10) === today || toDate(a.start) - Date.now() < 36 * 3600000 ? { estimate: estimate(a.clinic_id, a.type_id, a) } : {}) }));
   const ids = new Set(upcoming.map((a) => a.id));
   res.json({ upcoming, past: list.filter((a) => !ids.has(a.id)).reverse() });
 });
 
-function sendOffer(w, start, providerId) {
-  S.update("waitlist", w.id, { status: "offered", offer_start: start, offer_provider_id: providerId, date: start.slice(0, 10) });
+const waitlistType = (w) => w.type_id ? S.get("appt_types", w.type_id) :
+  S.filter("appt_types", (t) => t.clinic_id === w.clinic_id).sort((a, b) => a.minutes - b.minutes)[0];
+async function sendOffer(w, start, providerId) {
+  if (!validStart(start) || !providerId) return false;
+  const date = start.slice(0, 10), type = waitlistType(w);
+  if (!type || (w.date && w.date !== date) || (w.provider_id && w.provider_id !== providerId)) return false;
+  const expires = Math.min(Date.now() + 30 * 60000, toDate(start).getTime() - 30 * 60000);
+  if (expires <= Date.now()) return false;
+  const result = await S.schedule({ clinicId: w.clinic_id, date, waitlistId: w.id }, ({ appointments, offers, waiting }) => {
+    if (waiting?.status !== "waiting" || !slotsFor(w.clinic_id, date, { providerId, typeId: type.id, appointments, offers }).some((s) => s.start === start)) return {};
+    const value = revised(waiting, { status: "offered", offer_start: start, offer_provider_id: providerId,
+      offer_expires_at: expires, offer_minutes: type.minutes });
+    return { writes: [{ collection: "waitlist", value }] };
+  });
+  if (!result.writes) return false;
   const u = w.user_id ? S.get("users", w.user_id) : null;
   if (u) {
     const lang = userLang(u);
@@ -474,88 +533,138 @@ function sendOffer(w, start, providerId) {
     pushUser(u.id, { type: "waitlist" });
   }
   pushClinic(w.clinic_id, { type: "waitlist" });
+  return true;
 }
-function offerToWaitlist(clinicId, providerId, start) {
+async function offerToWaitlist(clinicId, providerId, start) {
   const date = start.slice(0, 10);
-  const w = S.filter("waitlist", (x) => x.clinic_id === clinicId && x.status === "waiting" && (!x.date || x.date === date) && (!x.provider_id || x.provider_id === providerId))
-    .sort((a, b) => a.id - b.id)[0];
-  if (w) sendOffer(w, start, providerId);
+  const rows = S.filter("waitlist", (x) => x.clinic_id === clinicId && x.status === "waiting" && (!x.date || x.date === date) && (!x.provider_id || x.provider_id === providerId))
+    .sort(waitlistOrder);
+  for (const w of rows) if (await sendOffer(w, start, providerId)) return;
+}
+function offerFreedTime(a) {
+  if (validStart(a.start) && toDate(a.start) > new Date())
+    void offerToWaitlist(a.clinic_id, a.provider_id, a.start).catch((e) => console.error("[waitlist]", e.message));
 }
 
-function canChange(req, a) {
+function canChange(req, a, cancelling = false) {
   const u = req.user;
   const isStaff = u.role !== "patient" && u.clinic_id === a.clinic_id;
   if (!isStaff && a.user_id !== u.id) return { code: 403, error: "forbidden" };
+  if (isStaff && u.staff_agreement_version !== LEGAL_VERSION) return { code: 403, error: "agreement_required" };
+  if (cancelling && a.status === "cancelled") return null;
+  if (finalStatuses.includes(a.status)) return { code: 409, error: "visit_closed" };
   const clinic = S.get("clinics", a.clinic_id);
   if (!isStaff && (toDate(a.start) - Date.now()) / 3600000 < clinic.cancel_hours) return { code: 400, error: "too_late_to_cancel", hours: clinic.cancel_hours, phone: clinic.phone };
   return null;
 }
-app.post("/api/appointments/:id/cancel", auth(), (req, res) => {
+app.post("/api/appointments/:id/cancel", auth(), async (req, res) => {
   const a = S.get("appointments", req.params.id);
   if (!a) return err(res, 404, "not_found");
-  const no = canChange(req, a);
-  if (no) return err(res, no.code, no.error, no);
-  if (a.status === "cancelled") return res.json({ ok: true });
-  if (req.user.role !== "patient") logAccess(req, "cancel", a);
-  const v = apptView(S.update("appointments", a.id, { status: "cancelled" }));
-  bookingNotice(v, a.user_id ? S.get("users", a.user_id) : null, "cancellation");
+  const result = await S.schedule({ clinicId: a.clinic_id, date: a.start.slice(0, 10), appointmentId: a.id }, ({ appointment }) => {
+    if (!appointment) return { code: 404, error: "not_found" };
+    const no = canChange(req, appointment, true);
+    if (no) return no;
+    if (appointment.status === "cancelled") return {};
+    const value = revised(appointment, { status: "cancelled" });
+    return { value, writes: [{ collection: "appointments", value }] };
+  });
+  if (result.error) return err(res, result.code, result.error, result);
+  if (!result.value) return res.json({ ok: true });
+  const v = apptView(result.value);
+  if (req.user.role !== "patient") logAccess(req, "cancel", v);
+  bookingNotice(v, v.user_id ? S.get("users", v.user_id) : null, "cancellation");
   changed(v);
-  if (toDate(a.start) > new Date()) offerToWaitlist(a.clinic_id, a.provider_id, a.start);
+  offerFreedTime(v);
   res.json({ ok: true });
 });
-app.post("/api/appointments/:id/reschedule", auth(), (req, res) => {
+app.post("/api/appointments/:id/reschedule", auth(), async (req, res) => {
   const a = S.get("appointments", req.params.id);
   if (!a) return err(res, 404, "not_found");
-  const no = canChange(req, a);
-  if (no) return err(res, no.code, no.error, no);
-  const start = req.body?.start, providerId = N(req.body?.provider_id) || a.provider_id;
-  const type = S.get("appt_types", a.type_id);
-  if (!start || !slotsFor(a.clinic_id, start.slice(0, 10), { providerId, typeId: a.type_id, ignoreId: a.id }).some((s) => s.start === start)) return err(res, 409, "slot_taken");
+  const start = req.body?.start;
+  if (!validStart(start)) return err(res, 409, "slot_taken");
+  const date = start.slice(0, 10), staff = req.user.role !== "patient";
+  const result = await S.schedule({ clinicId: a.clinic_id, date, appointmentId: a.id }, ({ appointments, offers, appointment }) => {
+    if (!appointment) return { code: 404, error: "not_found" };
+    const no = canChange(req, appointment);
+    if (no) return no;
+    const providerId = N(req.body?.provider_id) || appointment.provider_id;
+    const type = S.get("appt_types", appointment.type_id);
+    if (!type || !slotsFor(a.clinic_id, date, { providerId, typeId: type.id, ignoreId: a.id, staff, appointments, offers }).some((s) => s.start === start))
+      return { code: 409, error: "slot_taken" };
+    const value = revised(appointment, { start, end: addMin(start, type.minutes), provider_id: providerId, status: "booked",
+      checked_in_at: null, consult_at: null, completed_at: null, reminder_sent: 0 });
+    return { value, previous: appointment, writes: [{ collection: "appointments", value }] };
+  });
+  if (result.error) return err(res, result.code, result.error, result);
   if (req.user.role !== "patient") logAccess(req, "reschedule", a);
-  const v = apptView(S.update("appointments", a.id, { start, end: addMin(start, type.minutes), provider_id: providerId, status: "booked", reminder_sent: 0 }));
+  const v = apptView(result.value);
+  S.filter("forms", (f) => f.appointment_id === a.id).forEach((f) => S.update("forms", f.id, { due: date }));
   bookingNotice(v, a.user_id ? S.get("users", a.user_id) : null, "confirmation");
   changed(v);
-  if (toDate(a.start) > new Date()) offerToWaitlist(a.clinic_id, a.provider_id, a.start);
-  res.json({ appointment: v });
+  if (v.start !== result.previous.start || v.provider_id !== result.previous.provider_id) offerFreedTime(result.previous);
+  res.json({ appointment: staff ? v : patientApptView(v) });
 });
 
 // ---------- waitlist ----------
-app.post("/api/waitlist", auth("patient"), (req, res) => {
+app.post("/api/waitlist", auth("patient"), async (req, res) => {
   const b = req.body || {};
+  const clinicId = Number(b.clinic_id), providerId = N(b.provider_id), typeId = N(b.type_id), date = b.date || null;
+  if (!S.get("clinics", clinicId)?.accepting_online) return err(res, 409, "online_closed");
+  if (date && (!validDay(date) || date < ymd(new Date()))) return err(res, 400, "bad_date");
+  if (typeId && S.get("appt_types", typeId)?.clinic_id !== clinicId) return err(res, 400, "bad_type");
+  if (providerId && !providersOf(clinicId).some((p) => p.id === providerId)) return err(res, 400, "not_found");
   const member = b.member_id ? S.find("family_members", (m) => m.id === Number(b.member_id) && m.user_id === req.user.id) : null;
+  if (b.member_id && !member) return err(res, 400, "bad_member");
   const name = member ? `${member.first_name} ${member.last_name || ""}`.trim() : `${req.user.first_name} ${req.user.last_name}`;
-  S.insert("waitlist", { clinic_id: Number(b.clinic_id), provider_id: N(b.provider_id), type_id: N(b.type_id), user_id: req.user.id, member_id: member?.id || null,
-    patient_name: name, date: b.date || null, status: "waiting", offer_start: null, offer_provider_id: null });
-  pushClinic(Number(b.clinic_id), { type: "waitlist" });
+  const value = S.newScheduleRecord("waitlist", { clinic_id: clinicId, provider_id: providerId, type_id: typeId, user_id: req.user.id, member_id: member?.id || null,
+    patient_name: name, date, status: "waiting", offer_start: null, offer_provider_id: null, joined_at: Date.now() });
+  const result = await S.schedule({ clinicId, date: date || ymd(new Date()), readQueue: true }, ({ queue }) => {
+    const duplicate = queue.some((w) => w.user_id === value.user_id && (w.member_id || null) === value.member_id &&
+      w.date === date && w.provider_id === providerId && w.type_id === typeId && (w.status === "waiting" || offerActive(w)));
+    return duplicate ? {} : { writes: [{ collection: "waitlist", value, insert: true }] };
+  });
+  if (result.writes) pushClinic(clinicId, { type: "waitlist" });
   res.json({ ok: true });
 });
 app.get("/api/my/waitlist", auth("patient"), (req, res) => {
-  res.json({ waitlist: S.filter("waitlist", (w) => w.user_id === req.user.id && ["waiting", "offered"].includes(w.status)).sort((a, b) => a.id - b.id).map((w) => ({
+  res.json({ waitlist: S.filter("waitlist", (w) => w.user_id === req.user.id && (w.status === "waiting" || offerActive(w))).sort(waitlistOrder).map((w) => ({
     ...w, clinic_name: clinicName(w.clinic_id), provider_name: S.get("providers", w.provider_id)?.name || null, offer_provider_name: S.get("providers", w.offer_provider_id)?.name || null,
-    position: S.count("waitlist", (x) => x.clinic_id === w.clinic_id && x.status === "waiting" && x.id <= w.id) })) });
+    position: S.count("waitlist", (x) => x.clinic_id === w.clinic_id && x.status === "waiting" && waitlistOrder(x, w) <= 0 &&
+      (!x.date || !w.date || x.date === w.date) && (!x.provider_id || !w.provider_id || x.provider_id === w.provider_id)) })) });
 });
-app.delete("/api/waitlist/:id", auth("patient"), (req, res) => {
+async function releaseWaitlist(w, nextStatus) {
+  if (!w || !["waiting", "offered"].includes(w.status)) return false;
+  const date = w.offer_start?.slice(0, 10) || w.date || ymd(new Date());
+  const result = await S.schedule({ clinicId: w.clinic_id, date, waitlistId: w.id }, ({ waiting }) => {
+    if (!waiting || !["waiting", "offered"].includes(waiting.status) || (nextStatus === "expired" && (waiting.status !== "offered" || offerActive(waiting)))) return {};
+    return { previous: waiting, writes: [{ collection: "waitlist", value: revised(waiting, { status: nextStatus }) }] };
+  });
+  if (!result.previous) return false;
+  pushClinic(w.clinic_id, { type: "waitlist" });
+  pushUser(w.user_id, { type: "waitlist" });
+  if (result.previous.status === "offered") offerFreedTime({ ...w, start: result.previous.offer_start, provider_id: result.previous.offer_provider_id });
+  return true;
+}
+app.delete("/api/waitlist/:id", auth("patient"), async (req, res) => {
   const w = S.get("waitlist", req.params.id);
-  if (w && w.user_id === req.user.id) S.update("waitlist", w.id, { status: "left" });
+  if (w?.user_id === req.user.id) await releaseWaitlist(w, "left");
   res.json({ ok: true });
 });
-app.post("/api/waitlist/:id/accept", auth("patient"), (req, res) => {
+app.post("/api/waitlist/:id/accept", auth("patient"), async (req, res) => {
   const w = S.get("waitlist", req.params.id);
   if (!w || w.user_id !== req.user.id || w.status !== "offered") return err(res, 404, "not_found");
-  const typeId = w.type_id || S.filter("appt_types", (t) => t.clinic_id === w.clinic_id).sort((a, b) => a.minutes - b.minutes)[0].id;
-  const r = bookSlot({ clinicId: w.clinic_id, providerId: w.offer_provider_id, typeId, start: w.offer_start, user: req.user, memberId: w.member_id,
-    name: w.patient_name, phone: req.user.phone, email: req.user.email, notifyPref: req.user.notify_pref, reason: "Waitlist", source: "waitlist" });
-  if (r.error) { S.update("waitlist", w.id, { status: "waiting", offer_start: null }); return err(res, 409, r.error); }
-  S.update("waitlist", w.id, { status: "booked" });
+  if (!offerActive(w)) return err(res, 409, "offer_expired");
+  const r = await bookSlot({ clinicId: w.clinic_id, providerId: w.offer_provider_id, typeId: waitlistType(w)?.id, start: w.offer_start, user: req.user, memberId: w.member_id,
+    name: w.patient_name, phone: req.user.phone, email: req.user.email, notifyPref: req.user.notify_pref, reason: "Waitlist", source: "waitlist", offerId: w.id });
+  if (r.error) return err(res, 409, r.error);
   bookingNotice(r.appt, req.user, "confirmation");
   changed(r.appt);
-  res.json({ appointment: r.appt });
+  res.json({ appointment: patientApptView(r.appt) });
 });
-app.post("/api/waitlist/:id/decline", auth("patient"), (req, res) => {
+app.post("/api/waitlist/:id/decline", auth("patient"), async (req, res) => {
   const w = S.get("waitlist", req.params.id);
   if (!w || w.user_id !== req.user.id || w.status !== "offered") return err(res, 404, "not_found");
-  S.update("waitlist", w.id, { status: "declined" });
-  offerToWaitlist(w.clinic_id, w.offer_provider_id, w.offer_start);
+  await releaseWaitlist(w, "declined");
   res.json({ ok: true });
 });
 
@@ -598,7 +707,8 @@ app.post("/api/my/messages", auth("patient"), (req, res) => {
   res.json({ ok: true });
 });
 app.get("/api/my/notifications", auth(), (req, res) => {
-  res.json({ notifications: S.filter("notifications", (n) => n.user_id === req.user.id).sort((a, b) => b.id - a.id).slice(0, 30) });
+  res.json({ notifications: S.filter("notifications", (n) => n.user_id === req.user.id)
+    .sort((a, b) => b.created_at.localeCompare(a.created_at) || b.id - a.id).slice(0, 30) });
 });
 app.post("/api/my/notifications/read", auth(), (req, res) => {
   S.filter("notifications", (n) => n.user_id === req.user.id && !n.read).forEach((n) => S.update("notifications", n.id, { read: 1 }));
@@ -637,56 +747,164 @@ app.get("/api/staff/overview", staffOnly, (req, res) => {
     forms_pending: S.count("forms", (f) => f.status === "submitted" && apptIds.has(f.appointment_id)) });
 });
 app.get("/api/staff/appointments", staffOnly, (req, res) => {
-  const c = clinicOf(req), from = req.query.from || ymd(new Date()), to = req.query.to || from, q = (req.query.q || "").toLowerCase(), prov = N(req.query.provider);
-  res.json({ appointments: S.filter("appointments", (a) => a.clinic_id === c && a.start.slice(0, 10) >= from && a.start.slice(0, 10) <= to && a.patient_name.toLowerCase().includes(q)
-    && (!prov || a.provider_id === prov) && (req.query.include_cancelled || a.status !== "cancelled")).sort((a, b) => a.start.localeCompare(b.start)).map(apptView) });
+  const c = clinicOf(req), from = req.query.from || ymd(new Date()), to = req.query.to || from, prov = N(req.query.provider);
+  // Search matches name, email or phone (phone digits only, so "613 555-0101" finds "613-555-0101").
+  // With ?all=1 the search covers every date instead of the visible week.
+  const q = String(req.query.q || "").trim().toLowerCase(), qDigits = q.replace(/\D/g, ""), allDates = !!q && !!req.query.all;
+  const matches = (a) => !q || String(a.patient_name || "").toLowerCase().includes(q) || String(a.patient_email || "").toLowerCase().includes(q)
+    || (qDigits.length >= 3 && String(a.patient_phone || "").replace(/\D/g, "").includes(qDigits));
+  res.json({ appointments: S.filter("appointments", (a) => a.clinic_id === c && (allDates || (a.start.slice(0, 10) >= from && a.start.slice(0, 10) <= to)) && matches(a)
+    && (!prov || a.provider_id === prov) && (req.query.include_cancelled || a.status !== "cancelled")).sort((a, b) => a.start.localeCompare(b.start)).slice(0, allDates ? 200 : undefined).map(apptView) });
 });
 const clinicAppt = (req) => { const a = S.get("appointments", req.params.id); return a && a.clinic_id === clinicOf(req) ? a : null; };
+const canManageCare = (u, a) => u.staff_role === "practitioner" && u.provider_id === a.provider_id &&
+  S.get("providers", a.provider_id)?.active && a.status === "completed" && !!S.get("users", a.user_id);
+const careRows = (appointmentId) => S.filter("care_reminders", (r) => r.appointment_id === appointmentId).sort((a, b) => a.id - b.id);
+const patientIdentity = (a) => a.user_id ? `portal:${a.user_id}:${a.member_id || 0}` : `visit:${a.patient_record_id || a.id}`;
+app.get("/api/staff/patients", staffOnly, (req, res) => {
+  const q = String(req.query.q || "").trim().toLowerCase();
+  if (q.length < 2) return res.json({ patients: [] });
+  const rows = S.filter("appointments", (a) => a.clinic_id === clinicOf(req) && a.patient_name && !a.anonymized
+    && !["Deleted user", "Cancelled – account deleted"].includes(a.patient_name))
+    .sort((x, y) => y.start.localeCompare(x.start));
+  const unique = new Map();
+  for (const a of rows) if (!unique.has(patientIdentity(a))) unique.set(patientIdentity(a), a);
+  const qDigits = q.replace(/\D/g, "");
+  const patients = [...unique.values()].filter((a) => [a.patient_name, a.patient_email].some((value) => String(value || "").toLowerCase().includes(q))
+    || (qDigits.length >= 3 && String(a.patient_phone || "").replace(/\D/g, "").includes(qDigits)))
+    .slice(0, 15).map((a) => ({ id: a.id, name: a.patient_name, phone: a.patient_phone, email: a.patient_email, linked: !!a.user_id }));
+  res.json({ patients });
+});
 app.get("/api/staff/appointments/:id", staffOnly, (req, res) => {
   const a = clinicAppt(req);
   if (!a) return err(res, 404, "not_found");
   logAccess(req, "view", a);
   const v = apptView(a);
   v.forms = S.filter("forms", (f) => f.appointment_id === a.id).map(formOut);
-  v.history = S.filter("appointments", (x) => x.clinic_id === a.clinic_id && x.id !== a.id && x.patient_name.toLowerCase() === a.patient_name.toLowerCase())
+  if (canManageCare(req.user, a)) v.care_reminders = careRows(a.id);
+  v.history = S.filter("appointments", (x) => x.clinic_id === a.clinic_id && x.id !== a.id && patientIdentity(x) === patientIdentity(a))
     .sort((x, y) => y.start.localeCompare(x.start)).slice(0, 5).map(({ id, start, status }) => ({ id, start, status }));
   res.json({ appointment: v });
 });
-app.patch("/api/staff/appointments/:id", staffOnly, (req, res) => {
+app.post("/api/staff/appointments/:id/care-reminders", staffOnly, (req, res) => {
   const a = clinicAppt(req);
   if (!a) return err(res, 404, "not_found");
-  const b = req.body || {};
+  if (!canManageCare(req.user, a)) return err(res, 403, "forbidden");
+  const { reminder_id, kind, start_date, end_date, times } = req.body || {};
+  const label = Number(req.body?.label);
+  const daily = Array.isArray(times) ? [...new Set(times)].sort() : [];
+  if (!["medication", "recovery"].includes(kind) || !Number.isInteger(label) || label < 1 || label > 8 ||
+    !validDay(start_date) || !validDay(end_date) || start_date < a.start.slice(0, 10) || end_date < start_date ||
+    end_date > daysAfter(start_date, 365) || !daily.length || daily.length > 12 || !daily.every(validTime))
+    return err(res, 400, "bad_care_schedule");
+  const rows = careRows(a.id), existing = reminder_id ? rows.find((r) => r.id === Number(reminder_id)) : null;
+  if (reminder_id && !existing) return err(res, 404, "not_found");
+  if (rows.some((r) => r.id !== existing?.id && r.kind === kind && r.label === label)) return err(res, 409, "care_label_in_use");
+  const data = { kind, label, start_date, end_date, times: daily };
+  if (existing) S.update("care_reminders", existing.id, data);
+  else S.insert("care_reminders", { ...data, appointment_id: a.id, clinic_id: a.clinic_id, user_id: a.user_id, last_notified: null });
+  logAccess(req, "care", a);
+  pushUser(a.user_id, { type: "care" });
+  res.json({ reminders: careRows(a.id) });
+});
+app.delete("/api/staff/appointments/:id/care-reminders/:reminderId", staffOnly, (req, res) => {
+  const a = clinicAppt(req);
+  if (!a) return err(res, 404, "not_found");
+  if (!canManageCare(req.user, a)) return err(res, 403, "forbidden");
+  const r = S.get("care_reminders", req.params.reminderId);
+  if (!r || r.appointment_id !== a.id) return err(res, 404, "not_found");
+  S.remove("care_reminders", r.id);
+  logAccess(req, "care", a);
+  pushUser(a.user_id, { type: "care" });
+  res.json({ reminders: careRows(a.id) });
+});
+app.get("/api/my/care-reminders", auth("patient"), (req, res) => {
+  const from = req.query.from || ymd(new Date());
+  if (!validDay(from)) return err(res, 400, "bad_date");
+  const days = req.query.days === "7" ? 7 : 1;
+  const reminders = S.filter("care_reminders", (r) => r.user_id === req.user.id && r.end_date >= from && r.start_date <= daysAfter(from, days - 1));
+  const events = reminders.flatMap((r) => {
+    const a = S.get("appointments", r.appointment_id);
+    if (a?.status !== "completed" || a.user_id !== req.user.id) return [];
+    return occurrences(r, from, days).map((event) => ({ ...event, kind: r.kind, label: r.label,
+      clinic: clinicName(r.clinic_id), patient: a.patient_name }));
+  }).sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time) || a.label - b.label);
+  res.json({ from, days, timezone: process.env.TZ, events });
+});
+app.patch("/api/staff/appointments/:id", staffOnly, async (req, res) => {
+  const a = clinicAppt(req);
+  if (!a) return err(res, 404, "not_found");
+  const b = req.body || {}, patch = {};
+  if (b.patient_phone !== undefined) {
+    if (b.patient_phone !== null && typeof b.patient_phone !== "string") return err(res, 400, "bad_phone");
+    const phone = b.patient_phone?.trim() || null;
+    if (phone && (phone.length > 64 || !/\d/.test(phone) || /[\r\n]/.test(phone))) return err(res, 400, "bad_phone");
+    patch.patient_phone = phone;
+  }
+  if (b.patient_email !== undefined) {
+    if (b.patient_email !== null && typeof b.patient_email !== "string") return err(res, 400, "bad_email");
+    const email = b.patient_email?.trim() || null;
+    if (email && (email.length > 254 || !emailPattern.test(email))) return err(res, 400, "bad_email");
+    patch.patient_email = email;
+  }
+  const editsContact = Object.keys(patch).length > 0;
+  let status;
   if (b.status && b.status !== a.status) {
-    const st = statusOf(a.clinic_id, b.status);
-    if (!st) return err(res, 400, "bad_status");
+    status = statusOf(a.clinic_id, b.status);
+    if (!status) return err(res, 400, "bad_status");
     if (b.status === "cancelled") return err(res, 400, "use_cancel");
     const n = nowStr(), inside = ["checked_in", "waiting", "in_consult", "completed"].includes(b.status);
-    S.update("appointments", a.id, { status: b.status, checked_in_at: a.checked_in_at || (inside ? n : null),
+    Object.assign(patch, { status: b.status, checked_in_at: a.checked_in_at || (inside ? n : null),
       consult_at: a.consult_at || (["in_consult", "completed"].includes(b.status) ? n : null), completed_at: b.status === "completed" ? n : a.completed_at });
-    if (a.user_id) {
-      const u = S.get("users", a.user_id), lang = userLang(u);
-      notifyUser(u.id, lang === "fr" ? "Mise à jour du statut" : "Status update",
-        notify.fillTemplate(a.clinic_id, "status_update", lang, { clinic: clinicName(a.clinic_id), status: lang === "fr" ? st.label_fr : st.label_en }), "status", a.id);
+  }
+  if (b.staff_notes !== undefined) patch.staff_notes = String(b.staff_notes).slice(0, 2000);
+  const date = a.start.slice(0, 10);
+  const result = await S.schedule({ clinicId: a.clinic_id, date, appointmentId: a.id }, ({ appointments, offers, appointment }) => {
+    if (!appointment) return { code: 404, error: "not_found" };
+    if (appointment._v !== a._v) return { code: 409, error: "appointment_changed" };
+    const providerId = N(b.provider_id);
+    const next = { ...patch };
+    if (providerId && providerId !== appointment.provider_id) {
+      if (appointment.status === "cancelled" || !slotsFor(a.clinic_id, date, { providerId, staff: true,
+        duration: toMin(a.end.slice(11)) - toMin(a.start.slice(11)), ignoreId: a.id, appointments, offers }).some((s) => s.start === appointment.start))
+        return { code: 409, error: "slot_taken" };
+      next.provider_id = providerId;
     }
+    if (a.status === "cancelled" && next.status) return { code: 409, error: "visit_closed" };
+    if (!Object.keys(next).length) return { value: appointment };
+    const value = revised(appointment, next);
+    return { value, writes: [{ collection: "appointments", value }] };
+  });
+  if (result.error) return err(res, result.code, result.error);
+  const v = apptView(result.value);
+  const user = a.user_id ? S.get("users", a.user_id) : null;
+  if (status && user) {
+    const lang = userLang(user);
+    notifyUser(user.id, lang === "fr" ? "Mise à jour du statut" : "Status update",
+      notify.fillTemplate(a.clinic_id, "status_update", lang, { clinic: clinicName(a.clinic_id), status: lang === "fr" ? status.label_fr : status.label_en }), "status", a.id);
   }
-  if (b.staff_notes !== undefined) S.update("appointments", a.id, { staff_notes: String(b.staff_notes).slice(0, 2000) });
-  if (b.provider_id && Number(b.provider_id) !== a.provider_id) {
-    if (!slotsFor(a.clinic_id, a.start.slice(0, 10), { providerId: Number(b.provider_id), typeId: a.type_id, ignoreId: a.id }).some((s) => s.start === a.start)) return err(res, 409, "slot_taken");
-    const v = apptView(S.update("appointments", a.id, { provider_id: Number(b.provider_id) }));
-    bookingNotice(v, a.user_id ? S.get("users", a.user_id) : null, "provider_change");
+  if (v.provider_id !== a.provider_id) {
+    bookingNotice(v, user, "provider_change");
+    offerFreedTime(a);
   }
-  logAccess(req, b.status ? "status" : b.provider_id ? "provider" : "notes", a);
-  const v = apptView(S.get("appointments", a.id));
+  logAccess(req, editsContact ? "contact" : b.status ? "status" : b.provider_id ? "provider" : "notes", a);
   changed(v);
   res.json({ appointment: v });
 });
-app.post("/api/staff/appointments", staffOnly, (req, res) => {
+app.post("/api/staff/appointments", staffOnly, async (req, res) => {
   const b = req.body || {};
-  if (!b.patient_name || !b.start || !b.type_id) return err(res, 400, "missing_fields");
-  const r = bookSlot({ clinicId: clinicOf(req), providerId: N(b.provider_id), typeId: Number(b.type_id), start: b.start, user: null,
-    name: b.patient_name, phone: b.phone, email: b.email, notifyPref: b.email ? "email" : "app", reason: b.reason, source: b.source || "phone" });
+  const name = String(b.patient_name || "").trim();
+  if (!name || !b.start || !b.type_id) return err(res, 400, "missing_fields");
+  const prior = b.patient_record ? S.get("appointments", b.patient_record) : null;
+  if (b.patient_record && (!prior || prior.clinic_id !== clinicOf(req) || prior.patient_name !== name)) return err(res, 400, "not_found");
+  const patient = prior?.user_id ? S.get("users", prior.user_id) : null;
+  const member = prior?.member_id ? S.get("family_members", prior.member_id) : null;
+  if (prior?.user_id && (!patient || (prior.member_id && member?.user_id !== patient.id))) return err(res, 400, "not_found");
+  const r = await bookSlot({ clinicId: clinicOf(req), providerId: N(b.provider_id), typeId: Number(b.type_id), start: b.start, user: patient, memberId: member?.id,
+    patientRecordId: prior?.patient_record_id || prior?.id, name, phone: b.phone, email: b.email,
+    notifyPref: b.email ? (patient?.notify_pref || "email") : "app", reason: b.reason, source: b.source === "in_person" ? "in_person" : "phone" });
   if (r.error) return err(res, 409, r.error);
-  if (b.email) bookingNotice(r.appt, null, "confirmation");
+  if (b.email || patient) bookingNotice(r.appt, patient, "confirmation");
   logAccess(req, "book", r.appt);
   changed(r.appt);
   res.json({ appointment: r.appt });
@@ -727,20 +945,20 @@ app.post("/api/staff/appointments/:id/forms", staffOnly, (req, res) => {
   res.json({ ok: true });
 });
 app.get("/api/staff/waitlist", staffOnly, (req, res) => {
-  res.json({ waitlist: S.filter("waitlist", (w) => w.clinic_id === clinicOf(req) && ["waiting", "offered"].includes(w.status)).sort((a, b) => a.id - b.id).map((w) => {
+  res.json({ waitlist: S.filter("waitlist", (w) => w.clinic_id === clinicOf(req) && (w.status === "waiting" || offerActive(w))).sort(waitlistOrder).map((w) => {
     const t = S.get("appt_types", w.type_id), u = S.get("users", w.user_id);
     return { ...w, provider_name: S.get("providers", w.provider_id)?.name || null, type_en: t?.name_en, type_fr: t?.name_fr, phone: u?.phone, email: u?.email };
   }) });
 });
-app.post("/api/staff/waitlist/:id/offer", staffOnly, (req, res) => {
+app.post("/api/staff/waitlist/:id/offer", staffOnly, async (req, res) => {
   const w = S.get("waitlist", req.params.id);
   if (!w || w.clinic_id !== clinicOf(req) || w.status !== "waiting" || !req.body?.start) return err(res, 404, "not_found");
-  sendOffer(w, req.body.start, Number(req.body.provider_id));
+  if (!await sendOffer(w, req.body.start, Number(req.body.provider_id))) return err(res, 409, "slot_taken");
   res.json({ ok: true });
 });
-app.delete("/api/staff/waitlist/:id", staffOnly, (req, res) => {
+app.delete("/api/staff/waitlist/:id", staffOnly, async (req, res) => {
   const w = S.get("waitlist", req.params.id);
-  if (w && w.clinic_id === clinicOf(req)) S.update("waitlist", w.id, { status: "removed" });
+  if (w && w.clinic_id === clinicOf(req)) await releaseWaitlist(w, "removed");
   res.json({ ok: true });
 });
 app.get("/api/staff/messages", staffOnly, (req, res) => {
@@ -784,6 +1002,8 @@ app.patch("/api/admin/clinic", adminOnly, (req, res) => {
   if (b.cancel_hours !== undefined) patch.cancel_hours = Math.max(0, Number(b.cancel_hours) || 0);
   if (b.slot_minutes !== undefined) patch.slot_minutes = Math.max(5, Number(b.slot_minutes) || 15);
   if (b.accepting_online !== undefined) patch.accepting_online = b.accepting_online ? 1 : 0;
+  if (patch.hours && Object.values(JSON.parse(patch.hours)).some((h) => !Array.isArray(h) || !validTime(h[0]) || !validTime(h[1]) || h[0] >= h[1]))
+    return err(res, 400, "bad_hours");
   S.update("clinics", clinicOf(req), patch);
   res.json({ ok: true });
 });
@@ -826,13 +1046,21 @@ app.delete("/api/admin/blocks/:id", adminOnly, (req, res) => {
 app.get("/api/admin/staff", adminOnly, (req, res) => {
   res.json({ staff: S.filter("users", (u) => u.clinic_id === clinicOf(req) && u.role !== "patient").sort((a, b) => (a.role === "admin" ? -1 : 1) - (b.role === "admin" ? -1 : 1) || a.first_name.localeCompare(b.first_name)).map(publicUser) });
 });
+const staffRoles = ["reception", "nurse", "practitioner", "admin"];
+function staffAssignment(clinicId, staffRole, providerId) {
+  if (!staffRoles.includes(staffRole)) return null;
+  const provider = staffRole === "practitioner" ? S.get("providers", providerId) : null;
+  if (staffRole === "practitioner" && (!provider?.active || provider.clinic_id !== clinicId)) return null;
+  return { staff_role: staffRole, provider_id: provider?.id || null, role: staffRole === "admin" ? "admin" : "staff" };
+}
 app.post("/api/admin/staff", adminOnly, wrap(async (req, res) => {
   const b = req.body || {};
   if (!b.email || !b.first_name || !b.password) return err(res, 400, "missing_fields");
   if (String(b.password).length < 8) return err(res, 400, "weak_password");
   if (userByEmail(b.email)) return err(res, 409, "email_taken");
-  const role = b.staff_role === "admin" ? "admin" : "staff";
-  const u = S.insert("users", { email: b.email.toLowerCase().trim(), phone: b.phone || null, password_hash: hashSecret(b.password), role, clinic_id: clinicOf(req), staff_role: b.staff_role || "reception",
+  const assignment = staffAssignment(clinicOf(req), b.staff_role || "reception", b.provider_id);
+  if (!assignment) return err(res, 400, "bad_staff_assignment");
+  const u = S.insert("users", { email: b.email.toLowerCase().trim(), phone: b.phone || null, password_hash: hashSecret(b.password), ...assignment, clinic_id: clinicOf(req),
     first_name: b.first_name, last_name: b.last_name || "", lang: b.lang || "en", twofa: "none", account_pin_hash: null, email_verified: 0, notify_pref: "app" });
   const lang = userLang(u), cn = clinicName(clinicOf(req));
   notify.send({ to: u.email, lang, clinicId: clinicOf(req), subject: lang === "fr" ? `Votre accès ClinicFlow – ${cn}` : `Your ClinicFlow access – ${cn}`,
@@ -845,7 +1073,9 @@ app.patch("/api/admin/staff/:id", adminOnly, (req, res) => {
   if (!u || u.clinic_id !== clinicOf(req)) return err(res, 404, "not_found");
   const sr = req.body?.staff_role || u.staff_role;
   if (u.id === req.user.id && sr !== "admin") return err(res, 400, "cannot_demote_self");
-  S.update("users", u.id, { staff_role: sr, role: sr === "admin" ? "admin" : "staff" });
+  const assignment = staffAssignment(clinicOf(req), sr, req.body?.provider_id ?? u.provider_id);
+  if (!assignment) return err(res, 400, "bad_staff_assignment");
+  S.update("users", u.id, assignment);
   res.json({ ok: true });
 });
 app.delete("/api/admin/staff/:id", adminOnly, (req, res) => {
@@ -900,7 +1130,7 @@ app.delete("/api/admin/statuses/:id", adminOnly, (req, res) => {
 });
 app.put("/api/admin/templates/:key", adminOnly, (req, res) => {
   const t = S.find("templates", (x) => x.clinic_id === clinicOf(req) && x.key === req.params.key);
-  const data = { body_en: req.body?.body_en || "", body_fr: req.body?.body_fr || "" };
+  const data = { body_en: req.body?.body_en || "", body_fr: req.body?.body_fr || "", reviewed_at: S.nowStamp() };
   if (t) S.update("templates", t.id, data); else S.insert("templates", { clinic_id: clinicOf(req), key: req.params.key, ...data });
   res.json({ ok: true });
 });
@@ -961,21 +1191,55 @@ function sendReminders() {
   S.removeWhere("audit", older(365));
 }
 
+async function checkCareReminders() {
+  const now = nowStr(), from = now.slice(0, 10), cutoff = addMin(now, -5);
+  const rows = S.filter("care_reminders", (r) => r.start_date <= from && r.end_date >= cutoff.slice(0, 10));
+  for (const r of rows) {
+    const a = S.get("appointments", r.appointment_id), u = S.get("users", r.user_id);
+    if (!u || a?.status !== "completed" || a.user_id !== u.id) continue;
+    const due = occurrences(r, cutoff.slice(0, 10), cutoff.slice(0, 10) === from ? 1 : 2)
+      .map(({ date, time }) => date + " " + time)
+      .filter((when) => when <= now && when >= cutoff && when > (r.last_notified || "")).at(-1);
+    if (!due) continue;
+    const lang = userLang(u), fr = lang === "fr";
+    const title = fr ? "Rappel ClinicFlow" : "ClinicFlow reminder";
+    const body = fr ? "Un rappel est prévu. Ouvrez votre calendrier de rappels dans ClinicFlow." : "You have a scheduled reminder. Open your reminder calendar in ClinicFlow.";
+    const sent = await S.addCareNotice(r, due, { user_id: u.id, title, body, kind: "care", ref_id: r.id, read: 0 });
+    if (!sent) continue;
+    pushUser(u.id, { type: "care" });
+    if (u.email_verified && u.notify_pref === "email") void notify.send({ to: u.email, subject: title, body, lang });
+  }
+}
+async function checkShortTimers() {
+  for (const [key, value] of codes) if (value.expires <= Date.now()) codes.delete(key);
+  for (const w of S.filter("waitlist", (x) => x.status === "offered" && !offerActive(x))) await releaseWaitlist(w, "expired");
+  await checkCareReminders();
+}
+
 // ---------- errors & app fallback ----------
 app.use("/api", (req, res) => err(res, 404, "not_found"));
 app.get(/^\/(?!api).*/, (req, res) => res.sendFile(path.join(__dirname, "..", "public", "index.html")));
-app.use((e, req, res, next) => { if (e.message === "email_failed") return err(res, 502, "email_failed"); console.error(e); err(res, 500, "server_error"); });
+app.use((e, req, res, next) => {
+  if (e.message === "email_failed") return err(res, 502, "email_failed");
+  if (e.message === "code_locked") return err(res, 429, "too_many_attempts");
+  console.error(e);
+  err(res, 500, "server_error");
+});
 
 const PORT = Number(process.env.PORT) || 3000;
 async function main() {
   const reset = process.argv.includes("--reset");
   console.log("\n  Starting ClinicFlow…");
   const mode = await store.init({ reset });
-  if (store.isEmpty()) { seed({ samples: process.env.SAMPLE_DATA !== "no" }); console.log("  Created the starter clinics" + (process.env.SAMPLE_DATA !== "no" ? " and sample accounts" : "")); }
+  const samples = process.env.SAMPLE_DATA === "yes" || (mode === "file" && process.env.SAMPLE_DATA !== "no");
+  if (store.isEmpty() && samples) { seed(); console.log("  Created the starter clinics and sample accounts"); }
   notify.setup();
   await store.flush();
   setInterval(sendReminders, 10 * 60000);
   setTimeout(sendReminders, 5000);
+  const timerJob = () => void checkShortTimers().catch((e) => console.error("[reminders]", e.message));
+  setInterval(timerJob, 30 * 1000);
+  setTimeout(timerJob, 5000);
   app.listen(PORT, () => {
     console.log(`\n  ✅ ClinicFlow is running → open http://localhost:${PORT} in your browser`);
     console.log(`  Data:  ${mode === "firebase" ? "Firebase Firestore ✔" : "LOCAL FILE (add your Firebase key to use Firebase – see SETUP.md)"}`);

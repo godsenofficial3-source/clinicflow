@@ -12,10 +12,10 @@ const WEBHOOK = (process.env.EMAIL_WEBHOOK_URL || "").trim();
 function setup() {
   if (WEBHOOK) { ready = true; console.log("  Email: Gmail ✔ (via Google Apps Script)"); return; }
   if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) return;
-  transporter = nodemailer.createTransport({ service: "gmail", auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD.replace(/\s/g, "") } });
+  transporter = nodemailer.createTransport({ service: "gmail", connectionTimeout: 6000, greetingTimeout: 6000, socketTimeout: 6000,
+    auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD.replace(/\s/g, "") } });
   transporter.verify().then(() => { ready = true; console.log("  Email: connected to Gmail as " + process.env.GMAIL_USER); })
     .catch((e) => console.error("  Email: Gmail login FAILED – check GMAIL_USER / GMAIL_APP_PASSWORD (" + e.message + ")"));
-  ready = true; // optimistic until verify() answers
 }
 const demoMode = () => !transporter && !WEBHOOK;
 const APP_URL = (process.env.APP_URL || process.env.RENDER_EXTERNAL_URL || "").replace(/\/$/, "");
@@ -39,22 +39,32 @@ function html(subject, body, lang, code) {
 /** send({to, subject, body, clinicId, lang, code}) – emails for real when Gmail is configured. */
 async function send({ channel = "email", to, subject = "ClinicFlow", body, clinicId = null, lang = "en", code = null }) {
   if (!to || channel !== "email") return { ok: false, status: "skipped" };
+  const started = Date.now();
   let status = "demo";
-  if (WEBHOOK) {
+  let attempts = 0;
+  while (!demoMode() && attempts < 2) {
+    attempts++;
     try {
-      const r = await fetch(WEBHOOK, { method: "POST", headers: { "Content-Type": "text/plain" }, redirect: "follow",
-        body: JSON.stringify({ to, subject, text: body + (code ? `\n\n${code}` : ""), html: html(subject, body, lang, code) }) });
-      const out = await r.text();
-      if (!r.ok || !/"ok"\s*:\s*true/.test(out)) throw new Error("HTTP " + r.status + " " + out.slice(0, 200));
+      const message = { to, subject, text: body + (code ? `\n\n${code}` : ""), html: html(subject, body, lang, code) };
+      if (WEBHOOK) {
+        const r = await fetch(WEBHOOK, { method: "POST", headers: { "Content-Type": "text/plain" }, redirect: "follow",
+          body: JSON.stringify(message), signal: AbortSignal.timeout(6500) });
+        const out = await r.json().catch(() => ({}));
+        if (!r.ok || out.ok !== true) throw Object.assign(new Error("Email provider returned HTTP " + r.status), { temporary: r.status === 429 || r.status >= 500 });
+      } else {
+        await transporter.sendMail({ ...message, from: `"ClinicFlow" <${process.env.GMAIL_USER}>` });
+      }
       status = "sent";
-    } catch (e) { console.error("[email]", e.message); status = "failed"; }
-  } else if (transporter) {
-    try {
-      await transporter.sendMail({ from: `"ClinicFlow" <${process.env.GMAIL_USER}>`, to, subject, text: body + (code ? `\n\n${code}` : ""), html: html(subject, body, lang, code) });
-      status = "sent";
-    } catch (e) { console.error("[email]", e.message); status = "failed"; }
+      break;
+    } catch (e) {
+      status = "failed";
+      const temporary = e.temporary || (e.responseCode >= 400 && e.responseCode < 500) || ["ECONNECTION", "EDNS"].includes(e.code);
+      if (!temporary || attempts >= 2) { console.error("[email]", e.message); break; }
+      await new Promise((resolve) => setTimeout(resolve, 750));
+    }
   }
-  if (clinicId) store.insert("outbox", { clinic_id: clinicId, channel: "email", recipient: to, subject, body, status });
+  if (clinicId) store.insert("outbox", { clinic_id: clinicId, channel: "email", recipient: to, subject, body, status,
+    duration_ms: Date.now() - started, attempts });
   return { ok: status !== "failed", status };
 }
 

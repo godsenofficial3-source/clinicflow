@@ -6,10 +6,11 @@
 // If no Firebase key is found, it falls back to a local file (data/clinicflow.json) so the app still runs.
 const fs = require("node:fs");
 const path = require("node:path");
+const { randomInt } = require("node:crypto");
 
 const ROOT = path.join(__dirname, "..");
 const COLLECTIONS = ["clinics", "users", "family_members", "sessions", "providers", "availability", "blocks", "appt_types", "statuses",
-  "appointments", "waitlist", "form_templates", "forms", "messages", "templates", "saved_clinics", "crowd_reports", "notifications", "outbox", "consents", "audit"];
+  "appointments", "waitlist", "form_templates", "forms", "messages", "templates", "saved_clinics", "crowd_reports", "notifications", "outbox", "consents", "audit", "care_reminders"];
 
 const mem = Object.fromEntries(COLLECTIONS.map((c) => [c, new Map()]));
 const nextId = Object.fromEntries(COLLECTIONS.map((c) => [c, 1]));
@@ -43,12 +44,64 @@ function serviceAccount() {
 
 const DATA_DIR = process.env.DATA_DIR || path.join(ROOT, "data");
 const FILE = path.join(DATA_DIR, "clinicflow.json");
+const RESERVED_ID_START = 2 ** 47;
 
 function track(col, obj, fromListener = false) {
   const cur = mem[col].get(Number(obj.id));
   if (fromListener && cur && (cur._v || 0) > (obj._v || 0)) return;   // ignore an older echo of our own write
   mem[col].set(Number(obj.id), obj);
-  if (Number(obj.id) >= nextId[col]) nextId[col] = Number(obj.id) + 1;
+  if (Number(obj.id) < RESERVED_ID_START && Number(obj.id) >= nextId[col]) nextId[col] = Number(obj.id) + 1;
+}
+
+function saveLocal(writes = []) {
+  const changes = new Map();
+  for (const { collection, value } of writes) {
+    if (!changes.has(collection)) changes.set(collection, new Map(mem[collection]));
+    changes.get(collection).set(value.id, value);
+  }
+  const out = Object.fromEntries(COLLECTIONS.map((c) => [c, [...(changes.get(c) || mem[c]).values()]]));
+  fs.writeFileSync(FILE + ".tmp", JSON.stringify(out));
+  fs.renameSync(FILE + ".tmp", FILE);
+  clearTimeout(fileTimer);
+}
+
+// Scheduling changes are committed before they are published to the in-memory view.
+async function schedule({ clinicId, date, appointmentId, waitlistId, readQueue = false }, plan) {
+  const rows = (collection, time) => [...mem[collection].values()].filter((row) => row.clinic_id === clinicId && row[time]?.slice(0, 10) === date);
+  let result;
+  if (mode === "file") {
+    result = plan({ appointments: rows("appointments", "start"), offers: rows("waitlist", "offer_start"),
+      appointment: store.get("appointments", appointmentId), waiting: store.get("waitlist", waitlistId),
+      queue: readQueue ? store.filter("waitlist", (w) => w.clinic_id === clinicId) : [] });
+    if (result.writes?.length) saveLocal(result.writes);
+  } else {
+    await writeChain;
+    const doc = (collection, id) => fsdb.collection(collection).doc(String(id));
+    const guard = doc("schedule_locks", clinicId);
+    const forDate = (collection, time) => fsdb.collection(collection).where(time, ">=", date + " ").where(time, "<", date + "!");
+    const localRows = (snap) => snap.docs.map((d) => d.data()).filter((row) => row.clinic_id === clinicId);
+    result = await fsdb.runTransaction(async (tx) => {
+      await tx.get(guard);
+      const [appointments, offers, a, w, queue] = await Promise.all([
+        tx.get(forDate("appointments", "start")), tx.get(forDate("waitlist", "offer_start")),
+        appointmentId ? tx.get(doc("appointments", appointmentId)) : null, waitlistId ? tx.get(doc("waitlist", waitlistId)) : null,
+        readQueue ? tx.get(fsdb.collection("waitlist").where("clinic_id", "==", clinicId)) : null
+      ]);
+      const next = plan({ appointments: localRows(appointments), offers: localRows(offers), appointment: a?.data(), waiting: w?.data(),
+        queue: queue ? localRows(queue) : [] });
+      if (next.writes?.length) {
+        for (const { collection, value, insert } of next.writes) {
+          const ref = doc(collection, value.id);
+          if (insert) tx.create(ref, value);
+          else tx.set(ref, value);
+        }
+        tx.set(guard, { updated_at: nowStamp() });
+      }
+      return next;
+    });
+  }
+  for (const { collection, value } of result.writes || []) track(collection, value, true);
+  return result;
 }
 
 async function init({ reset = false } = {}) {
@@ -84,7 +137,7 @@ async function init({ reset = false } = {}) {
 }
 
 async function wipeFirestore() {
-  for (const c of COLLECTIONS) {
+  for (const c of [...COLLECTIONS, "schedule_locks"]) {
     const snap = await fsdb.collection(c).get();
     let batch = fsdb.batch(), n = 0;
     for (const d of snap.docs) { batch.delete(d.ref); if (++n % 400 === 0) { await batch.commit(); batch = fsdb.batch(); } }
@@ -99,9 +152,7 @@ function persist(col, id, obj) {
   } else {
     clearTimeout(fileTimer);
     fileTimer = setTimeout(() => {
-      const out = Object.fromEntries(COLLECTIONS.map((c) => [c, [...mem[c].values()]]));
-      fs.writeFileSync(FILE + ".tmp", JSON.stringify(out));
-      fs.renameSync(FILE + ".tmp", FILE);
+      saveLocal();
     }, 150);
   }
 }
@@ -110,6 +161,34 @@ const clone = (o) => (o ? { ...o } : o);
 const store = {
   get mode() { return mode; },
   init,
+  schedule,
+  async addCareNotice(reminder, due, notice) {
+    const notification = store.newScheduleRecord("notifications", notice);
+    function writesFor(current) {
+      if (!current || current._v !== reminder._v || (current.last_notified || "") >= due) return null;
+      const value = { ...current, last_notified: due, _v: (current._v || 0) + 1 };
+      return [{ collection: "care_reminders", value }, { collection: "notifications", value: notification }];
+    }
+    let writes;
+    if (mode === "file") {
+      writes = writesFor(store.get("care_reminders", reminder.id));
+      if (writes) saveLocal(writes);
+    } else {
+      await writeChain;
+      writes = await fsdb.runTransaction(async (tx) => {
+        const doc = fsdb.collection("care_reminders").doc(String(reminder.id));
+        const next = writesFor((await tx.get(doc)).data());
+        if (next) for (const { collection, value } of next) tx.set(fsdb.collection(collection).doc(String(value.id)), value);
+        return next;
+      });
+    }
+    for (const { collection, value } of writes || []) track(collection, value, true);
+    return !!writes;
+  },
+  newScheduleRecord(col, data) {
+    const id = mode === "file" ? nextId[col]++ : randomInt(RESERVED_ID_START, 2 * RESERVED_ID_START);
+    return { ...data, id, created_at: nowStamp(), _v: 1 };
+  },
   flush: () => writeChain,
   all: (col) => [...mem[col].values()].map(clone),
   get: (col, id) => (id == null ? undefined : clone(mem[col].get(Number(id)))),

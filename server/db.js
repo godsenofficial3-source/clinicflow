@@ -79,12 +79,14 @@ function seed({ samples = true } = {}) {
   });
 
   const H = (pw) => hashSecret(pw);
+  if (!samples) return;
   const user = (email, phone, role, clinic_id, staff_role, first_name, last_name, pin) => store.insert("users", { email, phone, password_hash: H("Demo1234!"), role, clinic_id, staff_role,
     first_name, last_name, lang: "en", twofa: "none", account_pin_hash: pin ? H(pin) : null, email_verified: 1, phone_verified: 0, notify_pref: "email" }).id;
   user("staff@demo.ca", "613-555-0102", "staff", clinicIds[0], "reception", "Alex", "Rivera");
   user("nurse@demo.ca", "613-555-0104", "staff", clinicIds[0], "nurse", "Priya", "Nair");
   user("admin@demo.ca", "613-555-0103", "admin", clinicIds[0], "admin", "Jordan", "Lee");
-  if (!samples) return;
+  const doctorId = user("doctor@demo.ca", "613-555-0105", "staff", clinicIds[0], "practitioner", "Owen", "Patel");
+  store.update("users", doctorId, { provider_id: provIds[1] });
   const patientId = user("patient@demo.ca", "613-555-0101", "patient", null, null, "Sarah", "Tremblay", "2468");
   const kidId = store.insert("family_members", { user_id: patientId, first_name: "Léo", last_name: "Tremblay", relation: "child" }).id;
   store.insert("family_members", { user_id: patientId, first_name: "Marc", last_name: "Tremblay", relation: "partner" });
@@ -130,6 +132,10 @@ function seed({ samples = true } = {}) {
   }
   const nextDay = new Date(now); do nextDay.setDate(nextDay.getDate() + 1); while ([0, 6].includes(nextDay.getDay()));
   const fu = types.find((t) => t.name_en === "Follow-up");
+  const completedAt = `${ymd(now)} 07:30`;
+  appt({ clinic_id: clinicIds[0], provider_id: provIds[1], type_id: fu.id, user_id: patientId, patient_name: "Sarah Tremblay",
+    patient_phone: "613-555-0101", patient_email: "patient@demo.ca", notify_pref: "app", reason: "Follow-up visit",
+    start: completedAt, end: `${ymd(now)} 07:45`, status: "completed", source: "online", completed_at: `${ymd(now)} 07:45`, reminder_sent: 1 });
   const a1 = appt({ clinic_id: clinicIds[0], provider_id: provIds[1], type_id: fu.id, user_id: patientId, patient_name: "Sarah Tremblay", patient_phone: "613-555-0101", patient_email: "patient@demo.ca",
     notify_pref: "app", reason: "Follow-up visit", start: `${ymd(nextDay)} 10:15`, end: `${ymd(nextDay)} 10:30`, status: "booked", source: "online", reminder_sent: 1 }).id;
   const later = new Date(nextDay); later.setDate(later.getDate() + 7);
