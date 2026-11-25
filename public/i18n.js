@@ -3,6 +3,7 @@ window.I18N = {
   en: {
     nav_more: "More",
     tab_nav_appointments: "Visits", tab_nav_today: "Today", tab_nav_schedule: "Schedule", tab_nav_staff_book: "Book", tab_nav_waitlist: "Waitlist", tab_nav_care: "Reminders",
+    wl_notice_title: "{name} joined the waitlist", wl_notice_pos: "#{n} in line", wl_notice_open: "Open waitlist", wl_any_prov: "Any practitioner",
     patient_mode_new: "New patient", patient_mode_returning: "Returning patient",
     lookup_hint: "Type at least 2 letters of a name, or part of a phone number or email.",
     returning_selected: "Booking for {name}. Their contact details are filled in below.",
@@ -205,6 +206,7 @@ window.I18N = {
   fr: {
     nav_more: "Plus",
     tab_nav_appointments: "Visites", tab_nav_today: "Aujourd’hui", tab_nav_schedule: "Horaire", tab_nav_staff_book: "Réserver", tab_nav_waitlist: "Attente", tab_nav_care: "Rappels",
+    wl_notice_title: "{name} s’est inscrit·e à la liste d’attente", wl_notice_pos: "nº {n} dans la file", wl_notice_open: "Ouvrir la liste d’attente", wl_any_prov: "N’importe quel praticien",
     patient_mode_new: "Nouveau patient", patient_mode_returning: "Patient déjà vu",
     lookup_hint: "Tapez au moins 2 lettres d’un nom, ou une partie d’un numéro de téléphone ou d’un courriel.",
     returning_selected: "Réservation pour {name}. Ses coordonnées sont remplies ci-dessous.",

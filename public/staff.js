@@ -5,6 +5,48 @@
   let META = null;
   CF.meta = async (force) => { if (!META || force || META.clinic.id !== S.user.clinic_id) META = await api("GET", "/staff/meta"); return META; };
   CF.listeners.push((m) => { if (m.type === "meta") META = null; });
+
+  // ---------- "joined the waitlist" corner notification (front desk + admins) ----------
+  // A small card in the bottom-right corner, like a Windows notification. It does not take focus,
+  // closes on its own after 10 s (paused while the mouse is over it) and never stacks more than 3.
+  const DESK_ROLES = ["reception", "admin"];
+  CF.listeners.push((m) => {
+    if (m.type !== "waitlist" || m.event !== "joined" || !S.user || !DESK_ROLES.includes(S.user.staff_role)) return;
+    if (CF.needsStaffAgreement && CF.needsStaffAgreement()) return;
+    deskNotice(m);
+  });
+  function deskNotice(m) {
+    let box = document.getElementById("desk-notices");
+    if (!box) {
+      box = document.createElement("div");
+      box.id = "desk-notices"; box.className = "desk-notices";
+      box.setAttribute("role", "status"); box.setAttribute("aria-live", "polite");
+      document.body.appendChild(box);
+    }
+    const when = m.date ? CF.relDay(m.date) : t("any_day");
+    const details = [when, S.lang === "fr" ? m.type_fr : m.type_en, m.provider_name || t("wl_any_prov")].filter(Boolean).join(" · ");
+    const el = document.createElement("div");
+    el.className = "desk-notice";
+    el.innerHTML = `<div class="dn-icon">${I("hourglass")}</div>
+      <div class="dn-text"><p class="dn-app">ClinicFlow · ${t("nav_waitlist")}</p>
+        <p class="dn-title">${t("wl_notice_title", { name: `<b>${esc(m.patient_name || "")}</b>` })}</p>
+        <p class="dn-body">${esc(details)}${m.position ? ` · ${esc(t("wl_notice_pos", { n: m.position }))}` : ""}</p>
+        <a class="dn-link" href="#/staff/waitlist">${t("wl_notice_open")}</a></div>
+      <button class="dn-close" aria-label="${esc(t("close"))}">${I("x")}</button>`;
+    let timer;
+    const close = () => { clearTimeout(timer); el.classList.add("out"); setTimeout(() => el.remove(), 250); };
+    const arm = () => { clearTimeout(timer); timer = setTimeout(close, 10000); };
+    el.querySelector(".dn-close").addEventListener("click", close);
+    el.querySelector(".dn-link").addEventListener("click", close);
+    el.addEventListener("mouseenter", () => clearTimeout(timer));
+    el.addEventListener("mouseleave", arm);
+    el.addEventListener("focusin", () => clearTimeout(timer));
+    el.addEventListener("focusout", arm);
+    box.appendChild(el);
+    while (box.children.length > 3) box.firstElementChild.remove();
+    arm();
+  }
+  CF.deskNotice = deskNotice;
   const st = (key) => META?.statuses.find((s) => s.key === key);
   const NEXT = { booked: ["checked_in", "act_check_in"], checked_in: ["waiting", "act_to_waiting"], waiting: ["in_consult", "act_start"], in_consult: ["completed", "act_complete"] };
   const nextBtn = (a, sm = true) => NEXT[a.status] ? `<button class="btn ${sm ? "sm" : ""} next-btn" style="--c:${esc(st(NEXT[a.status][0])?.color || "#0E6F66")}" data-act="advance" data-id="${a.id}" data-to="${NEXT[a.status][0]}">${t(NEXT[a.status][1])} ${I("chevR")}</button>` : "";
