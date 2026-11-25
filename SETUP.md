@@ -2,7 +2,7 @@
 
 You need:
 - a Google account (it's used for Firebase, Gmail and the AI)
-- **Node.js 22 or newer** (https://nodejs.org → download the "LTS" version)
+- **Node.js 22.5 or newer** (https://nodejs.org → download the "LTS" version)
 
 Each part below is optional. Without it the app still runs, but that feature stays off:
 
@@ -27,7 +27,7 @@ Each part below is optional. Without it the app still runs, but that feature sta
 1. Sign in to the Gmail account that should send the emails (for example a new `clinicflow.team@gmail.com`).
 2. Go to https://myaccount.google.com/security and turn on **2-Step Verification**. Google requires this before it gives out app passwords.
 3. Go to https://myaccount.google.com/apppasswords → name it `ClinicFlow` → **Create** → copy the 16-letter password.
-4. In the ClinicFlow folder, copy `.env.example` to a new file named **`.env`** and fill in:
+4. In the ClinicFlow folder, create a file named **`.env`** and fill in:
    ```
    GMAIL_USER=clinicflow.team@gmail.com
    GMAIL_APP_PASSWORD=abcd efgh ijkl mnop
@@ -39,10 +39,12 @@ Each part below is optional. Without it the app still runs, but that feature sta
 
 ## Run it
 
-Open a terminal in the ClinicFlow folder:
+On Windows, extract the entire ZIP. Open the folder containing `package.json` and double-click **Start_ClinicFlow_Windows.cmd**.
+
+On any desktop platform, open a terminal in that same folder:
 
 ```bash
-npm install
+npm ci
 npm start
 ```
 
@@ -56,13 +58,21 @@ Email: Gmail ✔
 
 **The first time anyone opens ClinicFlow,** they see a "Before you start" screen and must accept the Terms of Use and Privacy Policy, and choose whether to allow preference cookies. Staff and admins also accept a confidentiality agreement at their first sign-in.
 
-The first start fills Firebase with three Ottawa clinics and the sample accounts. This takes about 10 seconds. You'll then see all the data in the Firebase console under **Firestore Database**.
+Local file mode starts with sample Ottawa clinics and accounts by default. A fresh Firebase setup starts empty. To seed a fresh test Firebase database with fictional data, set `SAMPLE_DATA=yes` before starting.
 
 - **To start fresh** (this erases all data, including in Firebase): `npm run reset`
-- **To start without the sample patient and appointments:** add `SAMPLE_DATA=no` to `.env` before the first start.
+- **To start without sample accounts or clinics:** add `SAMPLE_DATA=no` to `.env` before the first local start and use **Register your clinic** to create the first clinic admin.
 
-**Sample accounts** (password `Demo1234!`): `patient@demo.ca` (account password `2468`), `staff@demo.ca`, `nurse@demo.ca`, `admin@demo.ca`.
+**Sample accounts** (password `Demo1234!`): `patient@demo.ca` (account password `2468`), `staff@demo.ca`, `nurse@demo.ca`, `doctor@demo.ca`, `admin@demo.ca`.
 These are fake addresses, so they can't receive emails. **To see real emails, create your own patient account with your real email** using "Create an account".
+
+### Try the reminder calendar
+
+1. Sign in as `doctor@demo.ca`. In **Today**, expand **Completed** and open Sarah Tremblay's completed follow-up.
+2. Open **Reminders → Add a reminder**, enter dates and daily times, and save.
+3. Sign in as `patient@demo.ca` and open **Reminders**. Use **Day** or **Week** to see the schedule. At the scheduled time, the running server posts an in-app notice. Accounts with verified email and email preferences receive a generic email when a sender is configured.
+
+For a new clinic, an admin creates a **Practitioner** staff account and links it to the active practitioner profile. The assigned practitioner manages reminders from a completed visit with a linked patient account. The feature stores generic labels and timing. Clinical instructions and prescriptions stay in the clinic's usual workflow.
 
 > **"localhost" links only work on the computer that is running `npm start`.**
 > To get a link anyone can open (for your client or team), use Replit below.

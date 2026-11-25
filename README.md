@@ -7,6 +7,21 @@ ClinicFlow is one web app with three interfaces behind a single login: **patient
 👉 **Start here: [SETUP.md](SETUP.md)** (about 10 minutes, no coding). The short version: install Node.js 22, then run `npm install` and `npm start`.
 ⚖️ **Legal & privacy summary:** [LEGAL-COMPLIANCE.md](LEGAL-COMPLIANCE.md)
 
+## What changed after the usability tests (November 2026)
+
+| Test finding | Fix |
+|---|---|
+| Staff couldn't cancel appointments | Cancel works from the appointment card, with a clear error message if anything goes wrong |
+| Staff couldn't edit contact details | Phone and email can be edited and saved directly on the appointment card |
+| Staff search only partly worked | Search finds patients by **name, phone or email** across **every date**, not just the visible week |
+| Returning patients had to be re-typed | The booking form has a **New patient / Returning patient** choice. Type part of a name or phone number, tap the patient, and their details are filled in |
+| Codes arrived at inconsistent times | Faster email time-outs with one automatic retry. "Send again" waits 30 seconds, and the code stays the same for 10 minutes, so any of our emails works |
+| The waitlist was confusing | The booking screen and "My appointments" explain that a waitlist is for **one day**, and that you get 30 minutes to accept a freed time |
+| Patient sidebar needed independent scrolling | The sidebar scrolls on its own and stays in place, and the appointment side panel scrolls separately too |
+| Mobile text and spacing | Short tab labels (no words cut in half), a "More" tab that shows hidden unread badges, and tighter spacing on small screens |
+
+Also added: practitioner accounts and visit reminders (no medication names or doses are stored), safer handling of simultaneous bookings (no double booking even with Firebase), and updated legal documents. Because the documents changed, everyone is asked to accept them again once.
+
 ## Files
 
 | File | What it is |
@@ -33,7 +48,8 @@ ClinicFlow is one web app with three interfaces behind a single login: **patient
   - choose a time, with weekday checkboxes, morning/afternoon/evening, and a date strip coloured by availability
   - confirm
 - My appointments: a live status tracker, a "how busy is it" estimate for each step of the visit plus a "you should be done around…" time, Google Maps directions, reschedule, and cancel (with the clinic's 24-hour rule).
-- Waitlist: when someone cancels, the spot is automatically offered to the next person, who accepts it in one tap.
+- Waitlist: choose a date. A compatible opening is held for a limited time while the next eligible patient decides.
+- Reminders: see your practitioner's medication and recovery schedule in a day or week calendar.
 - To-do (pre-visit forms), saved clinics, messages with the clinic, in-app notifications.
 - An optional, anonymous "Are you at the clinic? How busy is it?" check. Patients' answers improve the wait estimates for everyone.
 - **Privacy & data:** download all your data, or delete your account, at any time.
@@ -42,7 +58,8 @@ ClinicFlow is one web app with three interfaces behind a single login: **patient
 - Today's queue: Booked → Checked in → Waiting → In consultation → Completed, with a one-click "next step" button.
 - Day, week and list schedule, colour-coded by visit type, with a live "now" line, search, and practitioner and weekday filters.
 - Appointment card: contact details, status, practitioner, staff notes, forms (accept, or send back with a note), reschedule, cancel.
-- Booking for phone calls and walk-ins, waitlist management, and a message inbox.
+- Booking for phone calls and walk-ins with returning-patient lookup, waitlist management, and a message inbox.
+- Assigned practitioners can schedule generic reminders after completing a linked patient's visit.
 - A confidentiality agreement to accept at first sign-in.
 
 **Clinic admin**
@@ -68,7 +85,7 @@ ClinicFlow is one web app with three interfaces behind a single login: **patient
 
 **For everyone**
 - **Real-time sync:** a change in one interface shows up in the others instantly.
-- **No double bookings:** every booking is checked against existing appointments before it is saved.
+- Overlap checks run in the same database transaction as the booking when using Firestore.
 - **Full English/French switch** at any time.
 - **Accessibility:** text size, high contrast, easier-reading spacing, reduced motion, **voice control** (works hands-free), read-aloud, and support for screen readers and keyboard-only use. It passes an automated WCAG 2.1 AA check on every page.
 - **Responsive:** works on phones, tablets and desktop browsers.

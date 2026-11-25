@@ -71,7 +71,7 @@ code { background: var(--brand-soft); padding: .05em .35em; border-radius: 4px; 
 .top-actions { margin-left: auto; display: flex; gap: .35rem; align-items: center; }
 .layout { display: flex; min-height: calc(100vh - var(--top-h)); }
 .main-col { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.sidenav { width: var(--nav-w); flex: none; padding: 1rem .7rem; border-right: 1px solid var(--line); background: var(--card); position: sticky; top: var(--top-h); height: calc(100vh - var(--top-h)); overflow: auto; }
+.sidenav { width: var(--nav-w); flex: none; padding: 1rem .7rem; border-right: 1px solid var(--line); background: var(--card); position: sticky; top: var(--top-h); height: calc(100vh - var(--top-h)); height: calc(100dvh - var(--top-h)); overflow: auto; overscroll-behavior-y: contain; }
 .signed-out .sidenav, .signed-out .tabbar { display: none; }
 .nav-link { display: flex; align-items: center; gap: .7rem; padding: .7rem .8rem; border-radius: 10px; color: var(--ink-2); text-decoration: none; font-weight: 700; margin-bottom: 2px; min-height: 44px; }
 .nav-link:hover { background: var(--bg); color: var(--ink); }
@@ -88,7 +88,7 @@ main { flex: 1; min-width: 0; padding: 1.5rem clamp(1rem, 3vw, 2.5rem) 2rem; out
 @media (max-width: 860px) {
   .sidenav { display: none; }
   .tabbar { display: flex; position: fixed; bottom: 0; left: 0; right: 0; z-index: 30; background: var(--card); border-top: 1px solid var(--line); padding: .3rem .3rem calc(.3rem + env(safe-area-inset-bottom)); }
-  .tab { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: .35rem .2rem; font-size: .72rem; color: var(--ink-2); text-decoration: none; border-radius: 10px; position: relative; min-height: 48px; justify-content: center; font-weight: 700; }
+  .tab { flex: 1; min-width: 0; text-align: center; overflow-wrap: break-word; hyphens: auto; line-height: 1.15; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: .35rem .2rem; font-size: .72rem; color: var(--ink-2); text-decoration: none; border-radius: 10px; position: relative; min-height: 48px; justify-content: center; font-weight: 700; }
   .tab.active { color: var(--brand); background: var(--brand-soft); } .tab .ic { width: 22px; height: 22px; }
   .tab .badge { position: absolute; top: 2px; right: 18%; }
   .hide-sm { display: none; }
@@ -101,7 +101,7 @@ main { flex: 1; min-width: 0; padding: 1.5rem clamp(1rem, 3vw, 2.5rem) 2rem; out
 .grow { flex: 1; min-width: 0; } .grow-full { flex-basis: 100%; margin: 0; }
 .stack > * + * { margin-top: .8rem; }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; }
-@media (max-width: 600px) { .grid2 { grid-template-columns: 1fr; } }
+@media (max-width: 600px) { .grid2 { grid-template-columns: 1fr; } .page-head { gap: .65rem; margin-bottom: .9rem; } }
 .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); padding: 1.1rem 1.2rem; box-shadow: var(--shadow); margin-bottom: 1rem; }
 details > summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: .5rem; min-height: 32px; }
 details > summary::-webkit-details-marker { display: none; }
@@ -350,7 +350,12 @@ input:focus, select:focus, textarea:focus { border-color: var(--brand); outline:
 .modal-backdrop { position: absolute; inset: 0; background: rgba(10,25,30,.45); }
 .modal { position: relative; background: var(--card); border-radius: 18px; width: min(560px, 100%); max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,.25); animation: pop .18s ease; }
 .modal.wide { width: min(900px, 100%); }
-.modal-wrap.side { place-items: stretch end; padding: 0; } .modal-wrap.side .modal { width: min(520px, 100%); max-height: none; height: 100%; border-radius: 18px 0 0 18px; animation: slide .2s ease; }
+.modal-wrap.side { grid-template: minmax(0, 1fr) / minmax(0, 1fr); place-items: stretch end; padding: 0; }
+.modal-wrap.side .modal { width: min(520px, 100%); height: 100%; max-height: 100%; min-height: 0; overflow: hidden; border-radius: 18px 0 0 18px; animation: slide .2s ease; }
+.modal-wrap.side .modal-head { flex: none; }
+.modal-wrap.side .modal-body { flex: 1; min-height: 0; overscroll-behavior-y: contain; }
+.modal-wrap.side .modal-body:focus-visible { outline-offset: -3px; }
+html:has(.modal-wrap.side) { overflow: hidden; }
 @media (max-width: 600px) { .modal-wrap.side .modal { border-radius: 0; } }
 .modal-head { display: flex; align-items: center; justify-content: space-between; gap: .5rem; padding: 1rem 1.2rem .6rem; border-bottom: 1px solid var(--line); }
 .modal-head h2 { margin: 0; display: flex; gap: .4rem; align-items: center; }
@@ -364,7 +369,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--brand); outline:
 .a11y-group .seg-ctrl button { min-width: 48px; justify-content: center; font-family: var(--display); }
 .notif-list { list-style: none; padding: 0; margin: 0; } .notif-list li { padding: .8rem 0; border-bottom: 1px solid var(--line); } .notif-list li.unread { border-left: 4px solid var(--blue); padding-left: .7rem; }
 .notif-list p { margin: .2rem 0; } .notif-list time { font-size: .8rem; color: var(--muted); }
-.toasts { position: fixed; top: calc(var(--top-h) + .6rem); right: 1rem; z-index: 80; display: grid; gap: .5rem; max-width: min(420px, calc(100vw - 2rem)); }
+.toasts { position: fixed; top: calc(var(--top-h) + .6rem); right: 1rem; z-index: 80; display: grid; gap: .5rem; max-width: min(420px, calc(100vw - 2rem)); pointer-events: none; }
 .toast { display: flex; gap: .6rem; align-items: center; padding: .8rem 1rem; border-radius: 12px; background: var(--ink); color: #fff; box-shadow: 0 10px 30px rgba(0,0,0,.2); animation: pop .2s ease; transition: opacity .35s, transform .35s; }
 .toast-ok .ic { color: #6EE7B7; } .toast-err { background: #7F1D1D; } .toast-info .ic { color: #93C5FD; } .toast.out { opacity: 0; transform: translateY(-8px); }
 body.voice-on::after { content: "🎙"; position: fixed; left: 1rem; bottom: 1rem; z-index: 90; background: var(--red); color: #fff; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; box-shadow: 0 0 0 6px rgba(192,57,43,.2); }
@@ -400,6 +405,17 @@ html.hc .tracker li::before { background: #000; }
 .danger-zone { border-color: #F2B8B1; } .danger-zone h2 { color: var(--red); }
 @media print { .topbar, .sidenav, .tabbar, .fab { display: none; } }
 
+/* staff booking: new vs returning patient */
+.patient-mode { display: flex; width: 100%; }
+.patient-mode button { flex: 1; justify-content: center; }
+.patient-matches { max-height: 260px; overflow: auto; }
+.patient-matches .choice { width: 100%; display: flex; flex-direction: column; align-items: flex-start; text-align: left; gap: 2px; }
+@media (max-width: 600px) {
+  .page-head h1 { font-size: clamp(1.45rem, 6.5vw, 1.9rem); }
+  .toolbar { gap: .6rem; }
+  .actions .btn { flex: 1 1 auto; justify-content: center; }
+}
+
 </style>
 </head>
 <body>
@@ -426,7 +442,7 @@ html.hc .tracker li::before { background: #000; }
    {email} = privacy contact, {updated} = version date. Lines starting with "• " are bullet points.
    IMPORTANT: these documents were drafted for a university prototype. Have them reviewed by a lawyer
    before ClinicFlow is used with real patients in production. */
-window.LEGAL_VERSION = "2026-11-13";
+window.LEGAL_VERSION = "2026-11-24";
 window.LEGAL = {
   // =====================================================================================================
   terms: {
@@ -524,6 +540,7 @@ window.LEGAL = {
           "• Bookings: clinic, practitioner, date and time, visit type, an optional short note (max 140 characters, no medical details), status and check-in/consultation times, and waitlist requests.",
           "• Pre-visit forms: only the administrative answers the clinic asks for (for example preferred language or accessibility needs).",
           "• Messages you exchange with a clinic, saved clinics and in-app notifications.",
+          "• Visit reminders: the type, generic label, dates and times your practitioner sets for your reminders. The calendar contains no medication names, doses or clinical instructions.",
           "• “How busy is it?” answers: saved anonymously, without your name or account.",
           "• Technical information: a sign-in session token, and for clinic staff, a record of which appointment records they opened or changed (access log)."]],
         ["4. What we do NOT collect", ["We do not ask for or store diagnoses, symptoms, prescriptions, test results, treatment plans, health card numbers, social insurance numbers, payment card details, your precise location, or advertising identifiers. We do not use analytics, advertising or tracking cookies, and we do not build profiles about you."]],
@@ -539,12 +556,14 @@ window.LEGAL = {
         ["6. Your consent", ["We ask for your express consent when you create an account, in clear terms and separately from other information. You may withdraw consent at any time by deleting your account (Account → Privacy & data) or by writing to {email}. If you withdraw consent, we will no longer be able to provide the Service to you, but clinics may keep the appointment records they are required by law to keep."]],
         ["7. Who can see your information", [
           "• The clinic you book with, and only the clinic staff whose role requires it (reception, nurses, clinic administrators). Every opening or change of an appointment record by staff is logged.",
+          "• Your reminder calendar is available to your account and editable by the practitioner assigned to the completed visit.",
           "• Our service providers, only to run the Service and under their own security and confidentiality commitments: Google Cloud / Firebase (Cloud Firestore database, stored in the Montréal, Canada region), Google (Gmail, to send emails) and Render (web hosting, United States).",
           "• Authorities, only when required by law (for example a court order) or to prevent imminent harm.",
           "No one else. No data brokers, advertisers or social networks."]],
         ["8. Information processed outside your province or Canada", ["Our database is stored in Canada (Montréal). Some providers (email delivery and web hosting) may process information in the United States or other countries, where it may be accessed by authorities under local laws. We chose large providers with recognized security safeguards and limit what they receive to what is needed."]],
         ["9. How long we keep it", [
           "• Account and family information: until you delete your account. Accounts unused for 24 months may be deleted after an email notice.",
+          "• Reminder schedules: until removed by the practitioner or deleted with your account.",
           "• Appointments: while your account exists. When you delete your account, future appointments are cancelled and past ones are de-identified (name, email, phone and notes removed), except for records a clinic must keep by law.",
           "• Email delivery log: 90 days. In-app notifications: 180 days. Anonymous “how busy” reports: 30 days. Sign-in sessions: 30 days. Verification codes: 10 minutes. Staff access logs: 1 year.",
           "When information is no longer needed, it is securely deleted or anonymized."]],
@@ -578,6 +597,7 @@ window.LEGAL = {
           "• Réservations : clinique, praticien, date et heure, type de visite, courte note facultative (140 caractères au maximum, sans détails médicaux), statut et heures d'arrivée et de consultation, ainsi que les demandes de liste d'attente.",
           "• Formulaires de préenregistrement : seulement les réponses administratives demandées par la clinique (par exemple la langue préférée ou les besoins d'accessibilité).",
           "• Les messages échangés avec une clinique, les cliniques enregistrées et les avis dans l'application.",
+          "• Rappels de visite : le type, le libellé générique, les dates et les heures établis par votre praticien. Le calendrier ne contient aucun nom de médicament, aucune dose et aucune consigne clinique.",
           "• Réponses « Est-ce achalandé? » : enregistrées de façon anonyme, sans votre nom ni votre compte.",
           "• Renseignements techniques : un jeton de session de connexion et, pour le personnel des cliniques, un registre des dossiers de rendez-vous consultés ou modifiés (journal des accès)."]],
         ["4. Ce que nous NE recueillons PAS", ["Nous ne demandons ni ne conservons de diagnostics, symptômes, ordonnances, résultats d'examens, plans de traitement, numéros de carte santé, numéros d'assurance sociale, données de carte de paiement, votre position précise ou identifiants publicitaires. Nous n'utilisons aucun témoin d'analyse, de publicité ou de suivi et ne créons aucun profil à votre sujet."]],
@@ -599,6 +619,7 @@ window.LEGAL = {
         ["8. Renseignements traités à l'extérieur de votre province ou du Canada", ["Notre base de données est hébergée au Canada (Montréal). Certains fournisseurs (envoi de courriels et hébergement Web) peuvent traiter des renseignements aux États-Unis ou dans d'autres pays, où ils peuvent être consultés par les autorités en vertu des lois locales. Nous avons choisi de grands fournisseurs dotés de mesures de sécurité reconnues et limitons ce qu'ils reçoivent au strict nécessaire."]],
         ["9. Durée de conservation", [
           "• Renseignements du compte et de la famille : jusqu'à la suppression de votre compte. Les comptes inutilisés pendant 24 mois peuvent être supprimés après un avis par courriel.",
+          "• Calendrier des rappels : jusqu'au retrait par le praticien ou à la suppression de votre compte.",
           "• Rendez-vous : tant que votre compte existe. Lorsque vous supprimez votre compte, les rendez-vous à venir sont annulés et les rendez-vous passés sont dépersonnalisés (nom, courriel, téléphone et notes retirés), sauf les dossiers qu'une clinique doit conserver en vertu de la loi.",
           "• Registre d'envoi des courriels : 90 jours. Avis dans l'application : 180 jours. Signalements anonymes d'achalandage : 30 jours. Sessions de connexion : 30 jours. Codes de vérification : 10 minutes. Journaux d'accès du personnel : 1 an.",
           "Lorsque des renseignements ne sont plus nécessaires, ils sont supprimés de façon sécuritaire ou anonymisés."]],
@@ -731,6 +752,55 @@ window.LEGAL = {
 /* ClinicFlow – every piece of interface text, in English and Canadian French. */
 window.I18N = {
   en: {
+    nav_more: "More",
+    tab_nav_appointments: "Visits", tab_nav_today: "Today", tab_nav_schedule: "Schedule", tab_nav_staff_book: "Book", tab_nav_waitlist: "Waitlist", tab_nav_care: "Reminders",
+    patient_mode_new: "New patient", patient_mode_returning: "Returning patient",
+    lookup_hint: "Type at least 2 letters of a name, or part of a phone number or email.",
+    returning_selected: "Booking for {name}. Their contact details are filled in below.",
+    contact_update_hint: "Change the phone or email here if the patient gave new details.",
+    change: "Change",
+    search_results_for: "Results for “{q}”", clear_search: "Clear search",
+    search_all_dates_hint: "Searching every date, past and future. Clear the search to go back to the calendar.",
+    code_timing: "Emails usually arrive within a minute. The code stays the same for 10 minutes, so you can use it from any of our emails.",
+    resend_in: "Send again in {n} s",
+    waitlist_explain: "A waitlist is for one specific day. If someone cancels that day, we offer you the freed time first. You then have up to 30 minutes to accept it before it goes to the next person.",
+    nav_care: "Reminders",
+    search: "Search",
+    role_practitioner: "Practitioner",
+    role_practitioner_d: "Manages reminders for their completed visits.",
+    staff_provider: "Practitioner profile (for practitioner accounts)",
+    returning_patient: "Find a returning patient",
+    find_practitioner: "Find a practitioner",
+    lookup_patient: "Patient name, phone or email",
+    enter_patient_manually: "Enter a patient manually",
+    no_returning_patients: "No matching visits at this clinic.",
+    care_kind: "Reminder type",
+    care_medication: "Medication reminder",
+    care_recovery: "Recovery reminder",
+    care_number: "Reminder number",
+    care_start: "First day",
+    care_end: "Last day",
+    care_times: "Daily times",
+    care_times_hint: "Use 24-hour times separated by commas, for example 08:00, 20:00.",
+    care_staff_hint: "Use generic labels and the times agreed with the patient. Keep prescription and recovery instructions in your usual clinical workflow.",
+    care_patient_hint: "Calendar for the reminders your practitioner set. Follow the instructions your practitioner gave you.",
+    care_timezone: "Times shown in {zone}.",
+    care_empty_day: "No reminders scheduled.",
+    care_save: "Save reminder",
+    care_add: "Add a reminder",
+    care_remove_q: "Remove this reminder from the patient’s calendar?",
+    call_to_change: "Call the clinic to change this visit.",
+    waitlist_day_scope: "Join the waitlist for {date}. The clinic can offer any eligible time on that date.",
+    err_online_closed: "This clinic is currently closed to online booking. Call the clinic for help.",
+    err_visit_closed: "This appointment is already closed.",
+    err_offer_expired: "This offer has expired or was already used.",
+    err_bad_date: "Choose a valid date.",
+    err_bad_hours: "Each opening time must be before the closing time.",
+    err_bad_care_schedule: "Check the reminder’s dates, number and daily times.",
+    err_care_label_in_use: "This reminder number is already in use for that type.",
+    err_bad_staff_assignment: "Choose a valid role and an active practitioner profile for practitioner accounts.",
+    err_appointment_changed: "This appointment was updated. Close and reopen it before saving changes.",
+    au_care: "Changed visit reminders",
     privacy_contact_fallback: "the privacy contact listed by your clinic", last_updated: "Last updated", legal_docs: "Legal", legal_terms: "Terms of Use", legal_privacy: "Privacy Policy", legal_cookies: "Cookie Policy", legal_accessibility: "Accessibility", legal_clinic: "Clinic Service Agreement",
     cookie_settings: "Cookie settings", legal_versions_note: "The English and French versions of these documents are equally valid.",
     footer_emergency: "Emergency? Call 911.", footer_not_medical: "ClinicFlow does not provide medical advice.", footer_team: "Student prototype by a University of Ottawa design team (GNG 1103)",
@@ -759,9 +829,10 @@ window.I18N = {
     adm_audit: "Access log", access_log: "Access log", access_log_d: "Every time a staff member opens or changes an appointment record, it is recorded here (kept 1 year), as required for personal health information.",
     clinic_agreement_on_file: "Clinic Service Agreement accepted on {date}.", staff_member: "Staff member", action: "Action",
     au_view: "Opened appointment card", au_status: "Changed status", au_provider: "Changed practitioner", au_notes: "Edited staff notes", au_book: "Booked appointment", au_form: "Reviewed form", au_cancel: "Cancelled appointment", au_reschedule: "Changed time",
+    au_contact: "Edited appointment contact details",
     err_consent_required: "Please accept the Terms of Use and the Privacy Policy to continue.", err_bad_email: "Please enter a valid email address.", err_too_many_requests: "Too many attempts. Please wait a few minutes and try again.",
     err_agreement_required: "Please accept the staff confidentiality agreement first.", err_bad_password: "Wrong password.",
-    check_spam: "Can't find it? Check your spam or junk folder.", send_new_code: "Email me a new code", we_email_code: "We'll email you a 6-digit code to confirm your address.",
+    check_spam: "Can't find it? Check your spam or junk folder.", send_new_code: "Email me the code again", we_email_code: "We'll email you a 6-digit code to confirm your address.",
     err_email_failed: "We couldn't send the email. Please try again in a minute.",
     skip: "Skip to main content", close: "Close", confirm: "Confirm", are_you_sure: "Are you sure?", go_back: "Go back", continue: "Continue", back: "Back", next: "Next", previous: "Previous",
     save: "Save", saved: "Saved", add: "Add", remove: "Remove", cancel: "Cancel", none: "None", optional: "optional", on: "On", off: "Off", today: "Today", tomorrow: "Tomorrow",
@@ -778,7 +849,7 @@ window.I18N = {
     demo_accounts: "Demo accounts (for testing)", demo_password: "Password for all demo accounts", account_password: "Account password",
     clinic_q: "Run a clinic?", clinic_signup_link: "Register your clinic with ClinicFlow",
     pin_sub: "This account is shared (for example by a family). Enter the account password that only account holders know.", use_other_account: "Use another account",
-    verify_identity: "Confirm it's you", code_sent_to: "We sent a 6-digit code to {to} by {via}.", code_6: "6-digit code", verify: "Verify", resend_by: "Didn't get it? Send the code again by:", code_resent: "A new code was sent.",
+    verify_identity: "Confirm it's you", code_sent_to: "We sent a 6-digit code to {to} by {via}.", code_6: "6-digit code", verify: "Verify", resend_by: "Didn't get it? Send the code again by:", code_resent: "We emailed your code again.",
     via_email: "email", via_sms: "text message", via_call: "phone call", via_app: "in the app only",
     demo_mode: "Email isn't set up yet:", demo_code: "the code is shown here instead. Your code is {code}",
     register_sub: "It takes one minute. We only ask for what we need to book your visits.", first_name: "First name", last_name: "Last name", phone: "Phone", phone_hint: "So the clinic can call you if needed.",
@@ -843,8 +914,9 @@ window.I18N = {
     n_waitlist: "{n} on the waitlist", n_forms_review: "{n} form(s) to review", n_late: "{n} patient(s) not arrived yet", col_booked_d: "Coming later today", nobody: "Nobody",
     open_card_for: "Open appointment card for {name}", form_received: "Form received", form_missing: "Form missing",
     act_check_in: "Check in", act_to_waiting: "To waiting room", act_start: "Start consultation", act_complete: "Complete", status_updated: "Status: {s}",
-    view: "View", view_day: "Day", view_week: "Week", view_list: "List", search_patient: "Search a patient", all_providers: "All practitioners", n_appts: "{n} appointments", no_appts: "No appointments.",
+    view: "View", view_day: "Day", view_week: "Week", view_list: "List", search_patient: "Search by name, phone or email", all_providers: "All practitioners", n_appts: "{n} appointments", no_appts: "No appointments.",
     status: "Status", src_online: "Online", src_phone: "Phone", src_in_person: "In person", src_waitlist: "Waitlist", contact: "Contact", prefers: "Prefers",
+    appointment_contact: "Appointment contact", save_contact: "Save contact details", err_bad_phone: "Please enter a valid phone number.",
     staff_notes: "Staff notes", staff_notes_ph: "Visible to staff only. Admin notes only, no medical details.", save_notes: "Save notes", forms: "Forms", no_forms: "No forms.",
     accept: "Accept", return_note: "Note for the patient", return_note_ph: "E.g. line 3 is not filled in", return_form: "Send back", form_returned: "Form sent back to the patient.",
     send_form: "Send a form", form_sent_patient: "Form sent to the patient.", previous_visits: "Previous visits", change_time: "Change time", cancel_appointment: "Cancel appointment",
@@ -882,6 +954,55 @@ window.I18N = {
     err_bad_status: "Unknown status.", err_use_cancel: "Use the Cancel button.", err_bad_level: "Invalid answer.", err_Failed_to_fetch: "No connection. Check your internet.",
   },
   fr: {
+    nav_more: "Plus",
+    tab_nav_appointments: "Visites", tab_nav_today: "Aujourd’hui", tab_nav_schedule: "Horaire", tab_nav_staff_book: "Réserver", tab_nav_waitlist: "Attente", tab_nav_care: "Rappels",
+    patient_mode_new: "Nouveau patient", patient_mode_returning: "Patient déjà vu",
+    lookup_hint: "Tapez au moins 2 lettres d’un nom, ou une partie d’un numéro de téléphone ou d’un courriel.",
+    returning_selected: "Réservation pour {name}. Ses coordonnées sont remplies ci-dessous.",
+    contact_update_hint: "Modifiez le téléphone ou le courriel ici si le patient a donné de nouvelles coordonnées.",
+    change: "Changer",
+    search_results_for: "Résultats pour « {q} »", clear_search: "Effacer la recherche",
+    search_all_dates_hint: "Recherche dans toutes les dates, passées et futures. Effacez la recherche pour revenir au calendrier.",
+    code_timing: "Les courriels arrivent habituellement en moins d’une minute. Le code reste le même pendant 10 minutes : vous pouvez l’utiliser depuis n’importe lequel de nos courriels.",
+    resend_in: "Renvoyer dans {n} s",
+    waitlist_explain: "Une liste d’attente vise une journée précise. Si quelqu’un annule ce jour-là, nous vous offrons d’abord l’heure libérée. Vous avez ensuite jusqu’à 30 minutes pour l’accepter avant qu’elle soit offerte à la personne suivante.",
+    nav_care: "Rappels",
+    search: "Rechercher",
+    role_practitioner: "Praticien",
+    role_practitioner_d: "Gère les rappels pour ses visites terminées.",
+    staff_provider: "Profil du praticien (pour les comptes de praticiens)",
+    returning_patient: "Rechercher un patient déjà vu",
+    find_practitioner: "Rechercher un praticien",
+    lookup_patient: "Nom, téléphone ou courriel du patient",
+    enter_patient_manually: "Saisir un patient manuellement",
+    no_returning_patients: "Aucune visite correspondante dans cette clinique.",
+    care_kind: "Type de rappel",
+    care_medication: "Rappel de médicament",
+    care_recovery: "Rappel de rétablissement",
+    care_number: "Numéro du rappel",
+    care_start: "Premier jour",
+    care_end: "Dernier jour",
+    care_times: "Heures quotidiennes",
+    care_times_hint: "Utilisez le format de 24 heures et séparez les heures par des virgules, par exemple 08:00, 20:00.",
+    care_staff_hint: "Utilisez des libellés génériques et les heures convenues avec le patient. Conservez les ordonnances et consignes dans votre processus clinique habituel.",
+    care_patient_hint: "Calendrier des rappels programmés par votre praticien. Suivez les consignes de votre praticien.",
+    care_timezone: "Heures affichées dans le fuseau {zone}.",
+    care_empty_day: "Aucun rappel prévu.",
+    care_save: "Enregistrer le rappel",
+    care_add: "Ajouter un rappel",
+    care_remove_q: "Retirer ce rappel du calendrier du patient?",
+    call_to_change: "Appelez la clinique pour modifier cette visite.",
+    waitlist_day_scope: "Inscrivez-vous sur la liste d’attente pour le {date}. La clinique peut vous proposer toute heure admissible ce jour-là.",
+    err_online_closed: "Cette clinique a suspendu les réservations en ligne. Appelez la clinique pour obtenir de l’aide.",
+    err_visit_closed: "Ce rendez-vous est déjà clos.",
+    err_offer_expired: "Cette offre a expiré ou a déjà été utilisée.",
+    err_bad_date: "Choisissez une date valide.",
+    err_bad_hours: "Chaque heure d’ouverture doit précéder l’heure de fermeture.",
+    err_bad_care_schedule: "Vérifiez les dates, le numéro et les heures du rappel.",
+    err_care_label_in_use: "Ce numéro est déjà utilisé pour ce type de rappel.",
+    err_bad_staff_assignment: "Choisissez un rôle valide et un profil de praticien actif pour les comptes de praticiens.",
+    err_appointment_changed: "Ce rendez-vous a été modifié. Fermez-le et rouvrez-le avant d’enregistrer vos changements.",
+    au_care: "A modifié les rappels de la visite",
     privacy_contact_fallback: "la personne responsable de la confidentialité indiquée par votre clinique", last_updated: "Dernière mise à jour", legal_docs: "Renseignements juridiques", legal_terms: "Conditions d'utilisation", legal_privacy: "Politique de confidentialité", legal_cookies: "Politique relative aux témoins", legal_accessibility: "Accessibilité", legal_clinic: "Entente de service pour les cliniques",
     cookie_settings: "Paramètres des témoins", legal_versions_note: "Les versions française et anglaise de ces documents ont la même valeur.",
     footer_emergency: "Urgence? Composez le 911.", footer_not_medical: "ClinicFlow ne fournit pas d'avis médical.", footer_team: "Prototype étudiant d'une équipe de conception de l'Université d'Ottawa (GNG 1103)",
@@ -910,9 +1031,10 @@ window.I18N = {
     adm_audit: "Journal des accès", access_log: "Journal des accès", access_log_d: "Chaque fois qu'un membre du personnel consulte ou modifie un dossier de rendez-vous, cela est consigné ici (conservé 1 an), comme l'exige la protection des renseignements personnels sur la santé.",
     clinic_agreement_on_file: "Entente de service pour les cliniques acceptée le {date}.", staff_member: "Membre du personnel", action: "Action",
     au_view: "A consulté la fiche de rendez-vous", au_status: "A modifié le statut", au_provider: "A changé le praticien", au_notes: "A modifié les notes du personnel", au_book: "A réservé un rendez-vous", au_form: "A vérifié un formulaire", au_cancel: "A annulé un rendez-vous", au_reschedule: "A changé l'heure",
+    au_contact: "A modifié les coordonnées du rendez-vous",
     err_consent_required: "Veuillez accepter les Conditions d'utilisation et la Politique de confidentialité pour continuer.", err_bad_email: "Veuillez entrer une adresse courriel valide.", err_too_many_requests: "Trop de tentatives. Veuillez patienter quelques minutes et réessayer.",
     err_agreement_required: "Veuillez d'abord accepter l'entente de confidentialité du personnel.", err_bad_password: "Mot de passe incorrect.",
-    check_spam: "Vous ne le trouvez pas? Vérifiez votre dossier de courrier indésirable.", send_new_code: "M'envoyer un nouveau code", we_email_code: "Nous vous enverrons par courriel un code à 6 chiffres pour confirmer votre adresse.",
+    check_spam: "Vous ne le trouvez pas? Vérifiez votre dossier de courrier indésirable.", send_new_code: "Me renvoyer le code", we_email_code: "Nous vous enverrons par courriel un code à 6 chiffres pour confirmer votre adresse.",
     err_email_failed: "Le courriel n'a pas pu être envoyé. Veuillez réessayer dans une minute.",
     skip: "Passer au contenu principal", close: "Fermer", confirm: "Confirmer", are_you_sure: "Êtes-vous certain?", go_back: "Revenir", continue: "Continuer", back: "Retour", next: "Suivant", previous: "Précédent",
     save: "Enregistrer", saved: "Enregistré", add: "Ajouter", remove: "Retirer", cancel: "Annuler", none: "Aucun", optional: "facultatif", on: "Activé", off: "Désactivée", today: "Aujourd'hui", tomorrow: "Demain",
@@ -928,7 +1050,7 @@ window.I18N = {
     demo_accounts: "Comptes de démonstration (pour les tests)", demo_password: "Mot de passe de tous les comptes de démonstration", account_password: "Mot de passe du compte",
     clinic_q: "Vous gérez une clinique?", clinic_signup_link: "Inscrivez votre clinique à ClinicFlow",
     pin_sub: "Ce compte est partagé (par exemple, par une famille). Entrez le mot de passe du compte que seuls ses titulaires connaissent.", use_other_account: "Utiliser un autre compte",
-    verify_identity: "Confirmez votre identité", code_sent_to: "Nous avons envoyé un code à 6 chiffres à {to} par {via}.", code_6: "Code à 6 chiffres", verify: "Vérifier", resend_by: "Vous ne l'avez pas reçu? Renvoyer le code par :", code_resent: "Un nouveau code a été envoyé.",
+    verify_identity: "Confirmez votre identité", code_sent_to: "Nous avons envoyé un code à 6 chiffres à {to} par {via}.", code_6: "Code à 6 chiffres", verify: "Vérifier", resend_by: "Vous ne l'avez pas reçu? Renvoyer le code par :", code_resent: "Nous vous avons renvoyé votre code par courriel.",
     via_email: "courriel", via_sms: "texto", via_call: "appel téléphonique", via_app: "dans l'application seulement",
     demo_mode: "Le courriel n'est pas encore configuré :", demo_code: "le code s'affiche ici. Votre code est {code}",
     register_sub: "Une minute suffit. Nous demandons seulement ce qu'il faut pour réserver vos visites.", first_name: "Prénom", last_name: "Nom de famille", phone: "Téléphone", phone_hint: "Pour que la clinique puisse vous appeler au besoin.",
@@ -985,8 +1107,9 @@ window.I18N = {
     n_waitlist: "{n} sur la liste d'attente", n_forms_review: "{n} formulaire(s) à vérifier", n_late: "{n} patient(s) pas encore arrivé(s)", col_booked_d: "Plus tard aujourd'hui", nobody: "Personne",
     open_card_for: "Ouvrir la fiche de rendez-vous de {name}", form_received: "Formulaire reçu", form_missing: "Formulaire manquant",
     act_check_in: "Confirmer l'arrivée", act_to_waiting: "Vers la salle d'attente", act_start: "Commencer la consultation", act_complete: "Terminer", status_updated: "Statut : {s}",
-    view: "Affichage", view_day: "Jour", view_week: "Semaine", view_list: "Liste", search_patient: "Rechercher un patient", all_providers: "Tous les praticiens", n_appts: "{n} rendez-vous", no_appts: "Aucun rendez-vous.",
+    view: "Affichage", view_day: "Jour", view_week: "Semaine", view_list: "Liste", search_patient: "Rechercher par nom, téléphone ou courriel", all_providers: "Tous les praticiens", n_appts: "{n} rendez-vous", no_appts: "Aucun rendez-vous.",
     status: "Statut", src_online: "En ligne", src_phone: "Téléphone", src_in_person: "En personne", src_waitlist: "Liste d'attente", contact: "Coordonnées", prefers: "Préfère",
+    appointment_contact: "Coordonnées du rendez-vous", save_contact: "Enregistrer les coordonnées", err_bad_phone: "Veuillez entrer un numéro de téléphone valide.",
     staff_notes: "Notes du personnel", staff_notes_ph: "Visible par le personnel seulement. Notes administratives, aucun détail médical.", save_notes: "Enregistrer les notes", forms: "Formulaires", no_forms: "Aucun formulaire.",
     accept: "Accepter", return_note: "Note pour le patient", return_note_ph: "P. ex. la ligne 3 n'est pas remplie", return_form: "Renvoyer", form_returned: "Formulaire renvoyé au patient.",
     send_form: "Envoyer un formulaire", form_sent_patient: "Formulaire envoyé au patient.", previous_visits: "Visites précédentes", change_time: "Changer l'heure", cancel_appointment: "Annuler le rendez-vous",
@@ -1180,7 +1303,7 @@ window.I18N = {
     wrap.innerHTML = `<div class="modal-backdrop" data-act="modal-close"></div>
       <div class="modal ${wide ? "wide" : ""}" role="dialog" aria-modal="true" aria-labelledby="${id}">
         <div class="modal-head"><h2 id="${id}">${title}</h2><button class="icon-btn" data-act="modal-close" aria-label="${esc(t("close"))}">${I("x")}</button></div>
-        <div class="modal-body">${body}</div></div>`;
+        <div class="modal-body"${side ? ' tabindex="0"' : ""}>${body}</div></div>`;
     document.getElementById("modal-root").appendChild(wrap);
     const close = () => { wrap.remove(); modalStack = modalStack.filter((m) => m.wrap !== wrap); onClose && onClose(); prev && prev.focus && prev.focus(); };
     modalStack.push({ wrap, close });
@@ -1270,7 +1393,7 @@ window.I18N = {
     if (!u) return [];
     if (u.role === "patient") return [
       ["/home", "home", "nav_home"], ["/book", "plus", "nav_book"], ["/appointments", "cal", "nav_appointments"],
-      ["/todo", "todo", "nav_todo", S.unread.forms], ["/messages", "msg", "nav_messages", S.unread.messages], ["/clinics", "building", "nav_clinics"], ["/account", "user", "nav_account"]];
+      ["/care-reminders", "bell", "nav_care"], ["/todo", "todo", "nav_todo", S.unread.forms], ["/messages", "msg", "nav_messages", S.unread.messages], ["/clinics", "building", "nav_clinics"], ["/account", "user", "nav_account"]];
     const items = [["/staff/today", "queue", "nav_today"], ["/staff/schedule", "cal", "nav_schedule"], ["/staff/book", "plus", "nav_staff_book"],
       ["/staff/waitlist", "hourglass", "nav_waitlist"], ["/staff/messages", "msg", "nav_messages", S.unread.messages]];
     if (u.role === "admin") items.push(["/admin", "settings", "nav_admin"]);
@@ -1293,11 +1416,17 @@ window.I18N = {
     const items = CF.navItems();
     const link = (it, cls) => `<a href="#${it[0]}" class="${cls} ${path.startsWith(it[0]) ? "active" : ""}" ${path.startsWith(it[0]) ? 'aria-current="page"' : ""}>${I(it[1])}<span>${t(it[2])}</span>${it[3] ? `<span class="badge" aria-label="${esc(t("n_new", { n: it[3] }))}">${it[3]}</span>` : ""}</a>`;
     document.getElementById("sidenav").innerHTML = items.map((it) => link(it, "nav-link")).join("");
-    const tabs = S.user?.role === "patient" ? items.filter((i) => ["/home", "/book", "/appointments", "/todo", "/messages"].includes(i[0])) : items.slice(0, 5);
+    // Phone tab bar: 4 shortcuts + "More" (short labels so nothing wraps mid-word; More shows the hidden badges).
+    const hiddenBadges = items.slice(4).reduce((n, it) => n + (Number(it[3]) || 0), 0);
+    const short = (it) => [it[0], it[1], t("tab_" + it[2]) !== "tab_" + it[2] ? "tab_" + it[2] : it[2], it[3]];
+    const tabs = u ? [...items.slice(0, 4).map(short), ["/more", "menu", "nav_more", hiddenBadges || 0]] : [];
     document.getElementById("tabbar").innerHTML = tabs.map((it) => link(it, "tab")).join("");
     document.querySelector(".skip-link").textContent = t("skip");
     CF.renderFooter && CF.renderFooter();
   };
+  CF.route("/more", { title: "nav_more", roles: ["patient", "staff", "admin"], render: () =>
+    `<section class="page narrow"><h1>${t("nav_more")}</h1><div class="card">${CF.navItems().map(([path, icon, title, badge]) =>
+      `<a class="nav-link" href="#${path}">${I(icon)} ${t(title)}${badge ? `<span class="badge">${badge}</span>` : ""}</a>`).join("")}</div></section>` });
 
   CF.on("lang", async () => {
     S.lang = S.lang === "fr" ? "en" : "fr";
@@ -1321,11 +1450,13 @@ window.I18N = {
     const { notifications } = await CF.api("GET", "/my/notifications");
     CF.modal(t("notifications"), notifications.length ? `<ul class="notif-list">${notifications.map((n) =>
       `<li class="${n.read ? "" : "unread"}"><b>${esc(n.title)}</b><p>${esc(n.body)}</p><time>${esc(CF.fmtShort(n.created_at))} · ${esc(CF.fmtTime(n.created_at))}</time>
-        ${n.kind === "waitlist_offer" ? `<button class="btn sm primary" data-act="go" data-to="/appointments">${t("see_offer")}</button>` : ""}</li>`).join("")}</ul>` : CF.empty("bell", t("no_notifications")), { side: true });
+        ${n.kind === "waitlist_offer" ? `<button class="btn sm primary" data-act="notice-go" data-to="/appointments">${t("see_offer")}</button>` : ""}
+        ${n.kind === "care" ? `<button class="btn sm primary" data-act="notice-go" data-to="/care-reminders">${t("nav_care")}</button>` : ""}</li>`).join("")}</ul>` : CF.empty("bell", t("no_notifications")), { side: true });
     await CF.api("POST", "/my/notifications/read");
     S.unread.notifications = 0;
     CF.renderChrome((location.hash.slice(1) || "/").split("?")[0]);
   });
+  CF.on("notice-go", (el) => { CF.closeModal(); CF.go(el.dataset.to); });
 
   // ---------- accessibility ----------
   CF.applyA11y = () => {
@@ -1489,7 +1620,7 @@ window.I18N = {
       <div class="row between small"><a href="#/forgot">${t("forgot_password")}</a><a href="#/register">${t("create_account")}</a></div>
     </form>
     ${S.config.samples ? `<details class="demo-accounts"><summary>${t("demo_accounts")}</summary>
-      <ul>${[["patient@demo.ca", "role_patient", "2468"], ["staff@demo.ca", "role_reception"], ["nurse@demo.ca", "role_nurse"], ["admin@demo.ca", "role_admin"]].map(([e, r, pin]) =>
+      <ul>${[["patient@demo.ca", "role_patient", "2468"], ["staff@demo.ca", "role_reception"], ["nurse@demo.ca", "role_nurse"], ...(S.config.demoPractitioner ? [["doctor@demo.ca", "role_practitioner"]] : []), ["admin@demo.ca", "role_admin"]].map(([e, r, pin]) =>
         `<li><button class="link" data-act="demo-fill" data-email="${e}">${e}</button> · ${t(r)}${pin ? ` · ${t("account_password")}: <code>${pin}</code>` : ""}</li>`).join("")}</ul>
       <p class="small muted">${t("demo_password")}: <code>Demo1234!</code></p></details>` : ""}
     <hr/><p class="small">${I("building")} ${t("clinic_q")} <a href="#/clinic-signup">${t("clinic_signup_link")}</a></p>`) });
@@ -1505,12 +1636,28 @@ window.I18N = {
     ${demoBanner()}
     <form data-form="verify" class="stack">${CF.field("code", t("code_6"), { required: true, auto: "one-time-code", attrs: 'inputmode="numeric" maxlength="6" autofocus pattern="[0-9]*"' })}
       <button class="btn primary block" type="submit">${t("verify")}</button></form>
-    <p class="small muted">${t("check_spam")}</p>
-    <button class="btn sm ghost" data-act="resend">${I("mail")} ${t("send_new_code")}</button>`) });
+    <p class="small muted">${t("code_timing")} ${t("check_spam")}</p>
+    <button class="btn sm ghost" data-act="resend" data-cooldown>${I("mail")} <span>${t("send_new_code")}</span></button>`), after: codeCooldown });
+  // Wait 30 s before offering another email, so people don't ask again while the first one is on its way.
+  let cooldownTimer;
+  function codeCooldown() {
+    if (!pending.sentAt) pending.sentAt = Date.now();
+    clearInterval(cooldownTimer);
+    const tick = () => {
+      const btn = document.querySelector("[data-cooldown]");
+      if (!btn) return clearInterval(cooldownTimer);
+      const left = Math.ceil((pending.sentAt + 30000 - Date.now()) / 1000);
+      btn.disabled = left > 0;
+      btn.querySelector("span").textContent = left > 0 ? t("resend_in", { n: left }) : t("send_new_code");
+      if (left <= 0) clearInterval(cooldownTimer);
+    };
+    tick(); cooldownTimer = setInterval(tick, 1000);
+  }
   onForm("verify", async (d) => afterAuth(await api("POST", "/auth/verify", d)));
   on("resend", async (el) => {
-    try { pending = { ...pending, ...(await api("POST", "/auth/send-code", {})) }; CF.render(); CF.toast(t("code_resent")); }
-    catch (e) { CF.toast(CF.errMsg(e), "err"); }
+    el.disabled = true;
+    try { pending = { ...pending, ...(await api("POST", "/auth/send-code", {})), sentAt: Date.now() }; CF.render(); CF.toast(t("code_resent")); }
+    catch (e) { el.disabled = false; CF.toast(CF.errMsg(e), "err"); }
   });
 
   route("/register", { title: "create_account", guestOnly: true, render: () => authShell(t("create_account"), t("register_sub"), `
@@ -1572,9 +1719,11 @@ window.I18N = {
         <div class="row gap wrap actions">
           <a class="btn sm" href="${CF.mapsUrl(a.clinic)}" target="_blank" rel="noopener">${I("nav")} ${t("directions")}<span class="sr-only"> (${t("opens_new")})</span></a>
           <a class="btn sm ghost" href="tel:${esc(a.clinic.phone)}">${I("phone")} ${t("call_clinic")}</a>
-          ${full ? `<button class="btn sm ghost" data-act="resched" data-id="${a.id}">${I("cal")} ${t("reschedule")}</button>
-          <button class="btn sm ghost danger-text" data-act="cancel-appt" data-id="${a.id}">${I("x")} ${t("cancel")}</button>` : `<a class="btn sm ghost" href="#/appointments">${t("manage")}</a>`}
+          ${full && a.can_reschedule_online ? `<button class="btn sm ghost" data-act="resched" data-id="${a.id}">${I("cal")} ${t("reschedule")}</button>` : ""}
+          ${full && a.can_change_online ? `<button class="btn sm ghost danger-text" data-act="cancel-appt" data-id="${a.id}">${I("x")} ${t("cancel")}</button>` : ""}
+          ${full ? "" : `<a class="btn sm ghost" href="#/appointments">${t("manage")}</a>`}
         </div>
+        ${full && !a.can_reschedule_online ? `<p class="small muted">${t("call_to_change")}</p>` : ""}
         <p class="small muted">${I("pin")} ${esc(a.clinic.address)}, ${esc(a.clinic.city)}</p>
       </div></article>`;
   };
@@ -1625,8 +1774,8 @@ window.I18N = {
       ${waitlist.filter((w) => w.status === "offered").map(offerCard).join("")}
       <h2 class="section-title">${t("upcoming")} <span class="count">${upcoming.length}</span></h2>
       ${upcoming.length ? upcoming.map((a) => apptCard(a, { full: true })).join("") : `<div class="card">${CF.empty("cal", t("no_upcoming"))}</div>`}
-      ${waitlist.length ? `<h2 class="section-title">${t("my_waitlists")}</h2><div class="card"><ul class="plain-list">${waitlist.map((w) => `<li class="row between wrap">
-        <div><b>${esc(w.clinic_name)}</b> · ${w.date ? esc(CF.relDay(w.date)) : t("any_day")} ${w.provider_name ? "· " + esc(w.provider_name) : ""}
+      ${waitlist.length ? `<h2 class="section-title">${t("my_waitlists")}</h2><div class="card"><p class="small muted">${I("info")} ${t("waitlist_explain")}</p><ul class="plain-list">${waitlist.map((w) => `<li class="row between wrap">
+        <div><b>${esc(w.clinic_name)}</b> · ${w.date ? esc(CF.fmtDate(w.date)) : t("any_day")} ${w.provider_name ? "· " + esc(w.provider_name) : ""}
           <p class="small muted">${w.status === "offered" ? t("offer_waiting") : t("waitlist_position", { n: w.position })}</p></div>
         <button class="btn sm ghost" data-act="wl-leave" data-id="${w.id}">${t("leave")}</button></li>`).join("")}</ul></div>` : ""}
       <details class="past"><summary><h2 class="section-title inline">${t("past")} <span class="count">${past.length}</span></h2></summary>
@@ -1642,6 +1791,7 @@ window.I18N = {
   on("resched", async (el) => {
     const { upcoming } = await api("GET", "/my/appointments");
     const a = upcoming.find((x) => x.id === Number(el.dataset.id));
+    if (!a?.can_reschedule_online) { CF.toast(t("call_to_change"), "err"); CF.refresh(); return; }
     W = newWizard();
     Object.assign(W, { reschedule: a, member_id: a.member_id, clinic: { id: a.clinic_id, name: a.clinic.name }, type: a.type, provider_id: a.provider_id, step: "time" });
     W.clinic = (await api("GET", `/clinics/${a.clinic_id}`)).clinic;
@@ -1719,6 +1869,7 @@ window.I18N = {
 
   async function stepTime() {
     const c = W.clinic, ty = W.type;
+    if (!c.accepting_online) return `<div class="card">${CF.empty("cal", t("err_online_closed"))}</div>`;
     const qs = `type=${ty.id}${W.provider_id ? `&provider=${W.provider_id}` : ""}`;
     const { days } = await api("GET", `/clinics/${c.id}/days?days=21&${qs}`);
     const visible = days.filter((d) => W.days.includes(CF.toDate(d.date + " 00:00").getDay()));
@@ -1735,22 +1886,56 @@ window.I18N = {
         <fieldset><legend class="label">${t("time_of_day")}</legend><div class="check-pills">${["am", "pm", "eve"].map((k) =>
           `<label class="pill"><input type="checkbox" data-change="wiz-tod" value="${k}" ${W.tod.includes(k) ? "checked" : ""}/><span>${t("tod_" + k)}</span></label>`).join("")}</div></fieldset>
       </div>
-      <div class="date-strip" role="radiogroup" aria-label="${esc(t("choose_date"))}">${visible.map((d) => `<button role="radio" aria-checked="${d.date === W.date}" class="date-btn avail-${avail(d.count)}" data-act="wiz-date" data-d="${d.date}" ${d.count ? "" : 'aria-disabled="true"'}>
+      <div class="date-strip" role="radiogroup" aria-label="${esc(t("choose_date"))}">${visible.map((d) => `<button role="radio" aria-checked="${d.date === W.date}" class="date-btn avail-${avail(d.count)}" data-act="wiz-date" data-d="${d.date}">
         <span>${esc(CF.fmtDate(d.date, { weekday: "short" }))}</span><b>${CF.toDate(d.date + " 00:00").getDate()}</b><small>${d.count ? t("n_free", { n: d.count }) : t("full")}</small></button>`).join("")}</div>
       <p class="legend small"><span class="lg many"></span>${t("many_slots")} <span class="lg few"></span>${t("few_slots")} <span class="lg none"></span>${t("no_slots")}</p>
       <h2 class="section-title">${esc(CF.fmtDate(W.date))}</h2>
       ${uniq.length ? `<div class="slots" role="list">${uniq.map((s) => `<button class="slot" role="listitem" data-act="pick-slot" data-s="${s.start}" data-p="${s.provider_id}">${esc(CF.fmtTime(s.start))}${W.provider_id ? "" : `<small>${esc(s.provider_name.replace("Dr. ", "Dr "))}</small>`}</button>`).join("")}</div>`
-        : `<div class="card">${CF.empty("hourglass", t("day_full"), `<button class="btn primary" data-act="join-wl">${I("hourglass")} ${t("join_waitlist")}</button>`)}</div>`}
-      ${uniq.length ? `<p class="small muted">${t("none_fit")} <button class="link" data-act="join-wl">${t("join_waitlist")}</button></p>` : ""}`;
+        : `<div class="card">${CF.empty("hourglass", t("day_full"))}</div>`}
+      ${W.reschedule ? "" : `<div class="notice info"><div><p>${t("waitlist_day_scope", { date: esc(CF.fmtDate(W.date)) })}</p>
+        <button class="btn sm" data-act="join-wl">${I("hourglass")} ${t("join_waitlist")}</button></div></div>`}`;
   }
   on("wiz-day", (el) => { const d = Number(el.value); W.days = el.checked ? [...W.days, d] : W.days.filter((x) => x !== d); if (!W.days.length) W.days = [d]; CF.render({ quiet: true }); });
   on("wiz-tod", (el) => { W.tod = el.checked ? [...W.tod, el.value] : W.tod.filter((x) => x !== el.value); if (!W.tod.length) W.tod = [el.value]; CF.render({ quiet: true }); });
-  on("wiz-date", (el) => { if (el.getAttribute("aria-disabled") === "true") return; W.date = el.dataset.d; CF.render({ quiet: true }).then(() => document.querySelector(`[data-d="${W.date}"]`)?.focus()); });
+  on("wiz-date", (el) => { W.date = el.dataset.d; CF.render({ quiet: true }).then(() => document.querySelector(`[data-d="${W.date}"]`)?.focus()); });
   on("pick-slot", (el) => { W.slot = { start: el.dataset.s, provider_id: Number(el.dataset.p) }; next(); });
   on("join-wl", async () => {
-    await api("POST", "/waitlist", { clinic_id: W.clinic.id, provider_id: W.provider_id || null, type_id: W.type?.id, date: W.date, member_id: W.member_id });
-    CF.toast(t("waitlist_joined")); W = newWizard(); CF.go("/appointments");
+    try {
+      await api("POST", "/waitlist", { clinic_id: W.clinic.id, provider_id: W.provider_id || null, type_id: W.type?.id, date: W.date, member_id: W.member_id });
+      CF.toast(t("waitlist_joined")); W = newWizard(); CF.go("/appointments");
+    } catch (e) { CF.toast(CF.errMsg(e), "err"); }
   });
+
+  const calendar = { date: "", days: 7 };
+  function careDate(date, offset) {
+    const d = CF.toDate(date + " 12:00");
+    d.setDate(d.getDate() + offset);
+    return CF.ymd(d);
+  }
+  route("/care-reminders", { title: "nav_care", roles: ["patient"], live: true, render: async () => {
+    const { from, days, timezone, events } = await api("GET", `/my/care-reminders?days=${calendar.days}${calendar.date ? "&from=" + encodeURIComponent(calendar.date) : ""}`);
+    calendar.date = from;
+    const dateCards = Array.from({ length: days }, (_, i) => careDate(from, i)).map((date) => {
+      const scheduled = events.filter((event) => event.date === date);
+      return `<section class="card"><h2>${esc(CF.fmtDate(date))}</h2>
+        ${scheduled.length ? `<ul class="plain-list">${scheduled.map((event) => `<li class="row gap wrap"><b>${esc(CF.fmtTime(event.time))}</b>
+          <span>${t("care_" + event.kind)} ${event.label} · ${esc(event.patient)} · ${esc(event.clinic)}</span></li>`).join("")}</ul>` :
+        `<p class="small muted">${t("care_empty_day")}</p>`}</section>`;
+    });
+    return `<section class="page narrow stack">
+      <h1>${t("nav_care")}</h1><p class="muted">${t("care_patient_hint")} ${t("care_timezone", { zone: esc(timezone) })}</p>
+      <div class="row gap wrap">
+        <button class="btn sm" data-act="care-shift" data-step="-1">${t("previous")}</button>
+        <button class="btn sm" data-act="care-shift" data-step="0">${t("today")}</button>
+        <button class="btn sm" data-act="care-shift" data-step="1">${t("next")}</button>
+        <input type="date" value="${from}" aria-label="${esc(t("choose_date"))}" data-change="care-date"/>
+        <button class="btn sm" aria-pressed="${days === 1}" data-act="care-view" data-days="1">${t("view_day")}</button>
+        <button class="btn sm" aria-pressed="${days === 7}" data-act="care-view" data-days="7">${t("view_week")}</button>
+      </div>${dateCards.join("")}</section>`;
+  } });
+  on("care-shift", (el) => { const step = Number(el.dataset.step); calendar.date = step ? careDate(calendar.date, step * calendar.days) : ""; CF.refresh(); });
+  on("care-date", (el) => { if (el.value) { calendar.date = el.value; CF.refresh(); } });
+  on("care-view", (el) => { calendar.days = Number(el.dataset.days); CF.refresh(); });
 
   async function stepConfirm() {
     const c = W.clinic, ty = W.type || W.reschedule?.type, prov = c.providers.find((p) => p.id === W.slot.provider_id);
@@ -1966,7 +2151,7 @@ window.I18N = {
   const { t, esc, icon: I, api, on, onForm, route, state: S } = CF;
   const STAFF = ["staff", "admin"];
   let META = null;
-  CF.meta = async (force) => { if (!META || force) META = await api("GET", "/staff/meta"); return META; };
+  CF.meta = async (force) => { if (!META || force || META.clinic.id !== S.user.clinic_id) META = await api("GET", "/staff/meta"); return META; };
   CF.listeners.push((m) => { if (m.type === "meta") META = null; });
   const st = (key) => META?.statuses.find((s) => s.key === key);
   const NEXT = { booked: ["checked_in", "act_check_in"], checked_in: ["waiting", "act_to_waiting"], waiting: ["in_consult", "act_start"], in_consult: ["completed", "act_complete"] };
@@ -2039,12 +2224,14 @@ window.I18N = {
     await CF.meta();
     let from = V.date, to = V.date;
     if (V.view !== "day") { const m = monday(V.date); from = CF.ymd(m); const e = new Date(m); e.setDate(m.getDate() + 6); to = CF.ymd(e); }
-    const { appointments } = await api("GET", `/staff/appointments?from=${from}&to=${to}&q=${encodeURIComponent(V.q)}${V.provider ? `&provider=${V.provider}` : ""}`);
-    const title = V.view === "day" ? CF.fmtDate(V.date) : `${CF.fmtDate(from, { month: "long", day: "numeric" })} – ${CF.fmtDate(to, { month: "long", day: "numeric", year: "numeric" })}`;
+    // While searching, look through every date (past and future) and show the matches as a list.
+    const searching = V.q.trim().length >= 2;
+    const { appointments } = await api("GET", `/staff/appointments?from=${from}&to=${to}&q=${encodeURIComponent(V.q.trim())}${searching ? "&all=1" : ""}${V.provider ? `&provider=${V.provider}` : ""}`);
+    const title = searching ? t("search_results_for", { q: V.q.trim() }) : V.view === "day" ? CF.fmtDate(V.date) : `${CF.fmtDate(from, { month: "long", day: "numeric" })} – ${CF.fmtDate(to, { month: "long", day: "numeric", year: "numeric" })}`;
     let grid;
-    if (V.view === "list") {
+    if (V.view === "list" || searching) {
       grid = `<div class="table-wrap"><table class="table"><caption class="sr-only">${esc(title)}</caption><thead><tr><th>${t("when")}</th><th>${t("patient")}</th><th>${t("visit_type")}</th><th>${t("provider")}</th><th>${t("status")}</th><th><span class="sr-only">${t("actions")}</span></th></tr></thead>
-        <tbody>${appointments.filter((a) => V.days.includes(CF.toDate(a.start).getDay())).map((a) => `<tr><td>${esc(CF.fmtShort(a.start))}<br/><b>${esc(CF.fmtTime(a.start))}</b></td>
+        <tbody>${appointments.filter((a) => searching || V.days.includes(CF.toDate(a.start).getDay())).map((a) => `<tr><td>${esc(CF.fmtShort(a.start))}<br/><b>${esc(CF.fmtTime(a.start))}</b></td>
           <td><button class="link" data-act="appt" data-id="${a.id}">${esc(a.patient_name)}</button><br/><span class="small muted">${I(sourceIcon(a.source))} ${t("src_" + a.source)}</span></td>
           <td>${CF.typeChip(a.type)}</td><td>${esc(a.provider?.name || "")}</td><td>${CF.statusChip(a)}</td><td>${nextBtn(a)}</td></tr>`).join("") || `<tr><td colspan="6">${CF.empty("cal", t("no_appts"))}</td></tr>`}</tbody></table></div>`;
     } else if (V.view === "day") {
@@ -2067,7 +2254,9 @@ window.I18N = {
         <div class="field inline"><label for="sp">${t("provider")}</label><select id="sp" data-change="sprov"><option value="">${t("all_providers")}</option>${META.providers.filter((p) => p.active).map((p) => `<option value="${p.id}" ${String(V.provider) === String(p.id) ? "selected" : ""}>${esc(p.name)}</option>`).join("")}</select></div>
         ${V.view !== "day" ? `<fieldset class="inline"><legend class="sr-only">${t("days_of_week")}</legend><div class="check-pills">${[1, 2, 3, 4, 5, 6].map((d) => `<label class="pill"><input type="checkbox" value="${d}" data-change="sday" ${V.days.includes(d) ? "checked" : ""}/><span>${esc(CF.dayName(d, "short"))}</span></label>`).join("")}</div></fieldset>` : ""}
       </div>
-      <h2 class="section-title">${esc(title)} <span class="count">${t("n_appts", { n: appointments.length })}</span></h2>
+      <h2 class="section-title">${esc(title)} <span class="count">${t("n_appts", { n: appointments.length })}</span>
+        ${searching ? `<button class="btn sm ghost" data-act="sq-clear">${I("x")} ${t("clear_search")}</button>` : ""}</h2>
+      ${searching ? `<p class="small muted">${t("search_all_dates_hint")}</p>` : ""}
       <p class="legend small">${META.types.map((ty) => `<span class="lg" style="background:${esc(ty.color)}"></span>${esc(CF.L(ty, "name"))}`).join(" ")}</p>
       ${grid}</section>`;
   }, after: () => { const n = document.querySelector(".now-line"); if (n) n.scrollIntoView({ block: "center", behavior: "instant" }); } });
@@ -2091,12 +2280,30 @@ window.I18N = {
   on("sdate", (el) => { if (el.value) { V.date = el.value; CF.refresh(); } });
   on("sprov", (el) => { V.provider = el.value; CF.refresh(); });
   on("sday", (el) => { const d = Number(el.value); V.days = el.checked ? [...V.days, d] : V.days.filter((x) => x !== d); CF.refresh(); });
+  on("sq-clear", () => { V.q = ""; CF.refresh().then(() => document.getElementById("sq")?.focus()); });
   let sqT; on("sq", (el) => { V.q = el.value; clearTimeout(sqT); sqT = setTimeout(async () => { await CF.refresh(); const i = document.getElementById("sq"); i && (i.focus(), i.setSelectionRange(i.value.length, i.value.length)); }, 300); });
 
   // =====================================================================
   // APPOINTMENT CARD (side panel)
   // =====================================================================
   on("appt", async (el) => openAppt(el.dataset.id));
+  const careLabel = (r) => `${t("care_" + r.kind)} ${r.label}`;
+  function careForm(a, r) {
+    const id = "care-" + (r?.id || "new"), today = CF.ymd(new Date());
+    return `<form data-form="care-schedule" data-appt="${a.id}" class="stack">
+      ${r ? `<input type="hidden" name="reminder_id" value="${r.id}"/>` : ""}
+      <div class="grid2">
+        <div class="field"><label for="${id}-kind">${t("care_kind")}</label><select id="${id}-kind" name="kind">
+          ${["medication", "recovery"].map((k) => `<option value="${k}" ${r?.kind === k ? "selected" : ""}>${t("care_" + k)}</option>`).join("")}</select></div>
+        ${CF.field("label", t("care_number"), { type: "number", value: r?.label || 1, required: true, attrs: 'min="1" max="8"' })}
+        ${CF.field("start_date", t("care_start"), { type: "date", value: r?.start_date || today, required: true })}
+        ${CF.field("end_date", t("care_end"), { type: "date", value: r?.end_date || today, required: true })}
+      </div>
+      ${CF.field("times", t("care_times"), { value: r?.times.join(", ") || "", required: true, hint: t("care_times_hint"), attrs: 'maxlength="90"' })}
+      <div class="row gap wrap"><button class="btn primary sm" type="submit">${t("care_save")}</button>
+        ${r ? `<button class="btn sm danger-text" type="button" data-act="care-remove" data-appt="${a.id}" data-id="${r.id}">${t("remove")}</button>` : ""}</div>
+    </form>`;
+  }
   async function openAppt(id) {
     await CF.meta();
     const { appointment: a } = await api("GET", `/staff/appointments/${id}`);
@@ -2111,31 +2318,68 @@ window.I18N = {
       <p class="big-when">${I("cal")} ${esc(CF.fmtDate(a.start))} · <b>${esc(CF.fmtTime(a.start))}–${esc(CF.fmtTime(a.end))}</b></p>
       ${nextBtn(a, false)}
       <div class="field"><label for="ast">${t("status")}</label><select id="ast" data-change="set-status" data-id="${a.id}">${META.statuses.filter((s) => s.key !== "cancelled").map((s) => `<option value="${s.key}" ${s.key === a.status ? "selected" : ""}>${esc(CF.L(s, "label"))}</option>`).join("")}</select></div>
-      <h3>${t("contact")}</h3>
-      <div class="row gap wrap">${a.patient_phone ? `<a class="btn sm" href="tel:${esc(a.patient_phone)}">${I("phone")} ${esc(a.patient_phone)}</a>` : ""}${a.patient_email ? `<a class="btn sm ghost" href="mailto:${esc(a.patient_email)}">${I("mail")} ${esc(a.patient_email)}</a>` : ""}
-        ${a.user_id ? `<a class="btn sm ghost" href="#/staff/messages?u=${a.user_id}" data-act="modal-close-go" data-to="/staff/messages?u=${a.user_id}">${I("msg")} ${t("message")}</a>` : ""}</div>
+      <h3>${t("appointment_contact")}</h3>
+      <form data-form="appointment-contact" data-id="${a.id}" class="stack">
+        <div class="grid2">
+          ${CF.field("patient_phone", t("phone"), { type: "tel", value: a.patient_phone || "", auto: "off", attrs: 'maxlength="64"' })}
+          ${CF.field("patient_email", t("email"), { type: "email", value: a.patient_email || "", auto: "off", attrs: 'maxlength="254"' })}
+        </div>
+        <div class="row gap wrap">
+          <button class="btn sm" type="submit">${t("save_contact")}</button>
+          ${a.user_id ? `<a class="btn sm ghost" href="#/staff/messages?u=${a.user_id}" data-act="modal-close-go" data-to="/staff/messages?u=${a.user_id}">${I("msg")} ${t("message")}</a>` : ""}
+        </div>
+      </form>
+      ${a.care_reminders ? `<section class="card stack"><h3>${t("nav_care")}</h3><p class="small muted">${t("care_staff_hint")}</p>
+        ${a.care_reminders.map((r) => `<details><summary>${esc(careLabel(r))}</summary>${careForm(a, r)}</details>`).join("")}
+        <details><summary>${t("care_add")}</summary>${careForm(a)}</details></section>` : ""}
       <p class="small muted">${t("prefers")}: ${t("via_" + (a.notify_pref || "email"))}${a.reason ? ` · ${t("reason")}: ${esc(a.reason)}` : ""}</p>
       <div class="field"><label for="apr">${t("provider")}</label><select id="apr" data-change="set-provider" data-id="${a.id}">${META.providers.filter((p) => p.active).map((p) => `<option value="${p.id}" ${p.id === a.provider_id ? "selected" : ""}>${esc(p.name)}</option>`).join("")}</select></div>
       <form data-form="notes" data-id="${a.id}" class="field"><label for="anotes">${t("staff_notes")}</label><textarea id="anotes" name="staff_notes" rows="3" placeholder="${esc(t("staff_notes_ph"))}">${esc(a.staff_notes || "")}</textarea><button class="btn sm" type="submit">${t("save_notes")}</button></form>
       <h3>${t("forms")}</h3>${a.forms.map(formHtml).join("") || `<p class="muted small">${t("no_forms")}</p>`}
       <form data-form="send-form" data-id="${a.id}" class="row gap"><label class="sr-only" for="sft">${t("send_form")}</label><select id="sft" name="template_id">${META.form_templates.map((f) => `<option value="${f.id}">${esc(CF.L(f, "title"))}</option>`).join("")}</select><button class="btn sm ghost" type="submit">${I("send")} ${t("send_form")}</button></form>
       ${a.history.length ? `<h3>${t("previous_visits")}</h3><ul class="plain-list small">${a.history.map((h) => `<li>${esc(CF.fmtShort(h.start))} · ${esc(CF.L(st(h.status), "label"))}</li>`).join("")}</ul>` : ""}
-      <h3>${t("change_time")}</h3>
+      ${["cancelled", "completed", "no_show"].includes(a.status) ? "" : `<h3>${t("change_time")}</h3>
       <div class="row gap wrap"><input type="date" id="rdate" value="${a.start.slice(0, 10)}" aria-label="${esc(t("choose_date"))}" data-change="resched-date" data-id="${a.id}" data-p="${a.provider_id}" data-type="${a.type_id}"/></div>
       <div id="rslots" class="slots small-slots"></div>
-      <hr/><button class="btn danger" data-act="staff-cancel" data-id="${a.id}">${I("x")} ${t("cancel_appointment")}</button>`, { side: true });
+      <hr/><button class="btn danger" data-act="staff-cancel" data-id="${a.id}">${I("x")} ${t("cancel_appointment")}</button>`}`, { side: true });
   }
   CF.openAppt = openAppt;
+  onForm("care-schedule", async (d, f) => {
+    const id = f.dataset.appt;
+    await api("POST", `/staff/appointments/${id}/care-reminders`, { ...d, times: d.times.split(",").map((time) => time.trim()) });
+    CF.toast(t("saved"));
+    await openAppt(id);
+  });
+  on("care-remove", async (el) => {
+    if (!await CF.confirm(t("care_remove_q"), { danger: true, ok: t("remove") })) return;
+    try {
+      await api("DELETE", `/staff/appointments/${el.dataset.appt}/care-reminders/${el.dataset.id}`);
+      await openAppt(el.dataset.appt);
+    } catch (e) { CF.toast(CF.errMsg(e), "err"); }
+  });
   on("modal-close-go", (el) => { CF.closeModal(); CF.go(el.dataset.to); });
   on("set-status", async (el) => { await api("PATCH", `/staff/appointments/${el.dataset.id}`, { status: el.value }); CF.toast(t("status_updated", { s: CF.L(st(el.value), "label") })); CF.refresh(); });
   on("set-provider", async (el) => { try { await api("PATCH", `/staff/appointments/${el.dataset.id}`, { provider_id: Number(el.value) }); CF.toast(t("saved")); CF.refresh(); } catch (e) { CF.toast(CF.errMsg(e), "err"); } });
+  onForm("appointment-contact", async (d, f) => {
+    const fields = ["patient_phone", "patient_email"].filter((name) => d[name] !== f.elements.namedItem(name).defaultValue);
+    if (!fields.length) return;
+    const { appointment } = await api("PATCH", `/staff/appointments/${f.dataset.id}`, Object.fromEntries(fields.map((name) => [name, d[name]])));
+    for (const name of fields) {
+      const input = f.elements.namedItem(name), saved = appointment[name] || "";
+      if (input.value === d[name]) input.value = saved;
+      input.defaultValue = saved;
+    }
+    CF.toast(t("saved"));
+  });
   onForm("notes", async (d, f) => { await api("PATCH", `/staff/appointments/${f.dataset.id}`, d); CF.toast(t("saved")); });
   onForm("send-form", async (d, f) => { await api("POST", `/staff/appointments/${f.dataset.id}/forms`, { template_id: Number(d.template_id) }); CF.toast(t("form_sent_patient")); openAppt(f.dataset.id); });
   on("form-accept", async (el) => { await api("POST", `/staff/forms/${el.dataset.id}/accept`); CF.toast(t("saved")); openAppt(el.dataset.a); });
   onForm("form-return", async (d, f) => { await api("POST", `/staff/forms/${f.dataset.id}/return`, d); CF.toast(t("form_returned")); openAppt(f.dataset.a); });
   on("staff-cancel", async (el) => {
     if (!(await CF.confirm(t("staff_cancel_q"), { danger: true, ok: t("yes_cancel") }))) return;
-    await api("POST", `/appointments/${el.dataset.id}/cancel`); CF.closeModal(); CF.toast(t("cancelled_ok")); CF.refresh();
+    el.disabled = true;
+    try { await api("POST", `/appointments/${el.dataset.id}/cancel`); CF.closeModal(); CF.toast(t("cancelled_ok")); CF.refresh(); }
+    catch (e) { el.disabled = false; CF.toast(CF.errMsg(e), "err"); }
   });
   on("resched-date", async (el) => {
     const { slots } = await api("GET", `/clinics/${S.user.clinic_id}/slots?date=${el.value}&type=${el.dataset.type}&provider=${el.dataset.p}`);
@@ -2149,8 +2393,23 @@ window.I18N = {
   // =====================================================================
   // MANUAL BOOKING (phone / walk-in) – few clicks
   // =====================================================================
-  const B = { date: CF.ymd(new Date()), type: null, provider: "", slot: null, source: "phone" };
+  const initialBooking = () => ({ date: CF.ymd(new Date()), type: null, provider: "", providerQuery: "", slot: null, source: "phone", draft: {}, patient: null, matches: [], mode: "new", lookup: "" });
+  const patientMatchesHtml = () => B.lookup.trim().length < 2 ? `<p class="small muted">${t("lookup_hint")}</p>` :
+    B.matches.map((p) => `<button type="button" class="choice" data-act="pick-booking-patient" data-id="${p.id}">
+      <b>${esc(p.name)}</b><span class="small muted">${esc([p.phone, p.email].filter(Boolean).join(" · "))}</span></button>`).join("") || `<p>${t("no_returning_patients")}</p>`;
+  const B = initialBooking();
+  function bookingProviderOptions() {
+    const query = B.providerQuery.trim().toLowerCase();
+    return `<option value="">${t("any_provider")}</option>` + META.providers.filter((p) => p.active &&
+      (String(p.id) === B.provider || `${p.name} ${p.specialty || ""}`.toLowerCase().includes(query)))
+      .map((p) => `<option value="${p.id}" ${String(p.id) === B.provider ? "selected" : ""}>${esc(p.name)}</option>`).join("");
+  }
+  function keepBookingDraft() {
+    const form = document.querySelector('form[data-form="staff-book"]');
+    if (form) B.draft = CF.formData(form);
+  }
   route("/staff/book", { title: "nav_staff_book", roles: STAFF, render: async () => {
+    if (B.userId !== S.user.id) Object.assign(B, initialBooking(), { userId: S.user.id });
     await CF.meta();
     if (!B.type) B.type = META.types[0]?.id;
     const { slots } = await api("GET", `/clinics/${S.user.clinic_id}/slots?date=${B.date}&type=${B.type}${B.provider ? `&provider=${B.provider}` : ""}`);
@@ -2160,35 +2419,95 @@ window.I18N = {
       <div class="card stack">
         <fieldset><legend class="label">${t("booked_by")}</legend><div class="seg-ctrl" role="radiogroup">${["phone", "in_person"].map((s) => `<button role="radio" aria-checked="${B.source === s}" data-act="bsrc" data-s="${s}">${I(sourceIcon(s))} ${t("src_" + s)}</button>`).join("")}</div></fieldset>
         <fieldset><legend class="label">${t("visit_type")}</legend><div class="check-pills">${META.types.map((ty) => `<button class="pill type-pill ${B.type === ty.id ? "on" : ""}" style="--c:${esc(ty.color)}" aria-pressed="${B.type === ty.id}" data-act="btype" data-id="${ty.id}">${esc(CF.L(ty, "name"))} · ${ty.minutes}′</button>`).join("")}</div></fieldset>
-        <div class="grid2"><div class="field"><label for="bp">${t("provider")}</label><select id="bp" data-change="bprov"><option value="">${t("any_provider")}</option>${META.providers.filter((p) => p.active).map((p) => `<option value="${p.id}" ${String(B.provider) === String(p.id) ? "selected" : ""}>${esc(p.name)}</option>`).join("")}</select></div>
+        ${CF.field("provider_search", t("find_practitioner"), { type: "search", value: B.providerQuery, attrs: 'data-input="booking-provider-query"' })}
+        <div class="grid2"><div class="field"><label for="bp">${t("provider")}</label><select id="bp" data-change="bprov">${bookingProviderOptions()}</select></div>
           <div class="field"><label for="bd">${t("date")}</label><input id="bd" type="date" value="${B.date}" min="${CF.ymd(new Date())}" data-change="bdate"/></div></div>
         <h2 class="label">${t("free_times")} · ${esc(CF.relDay(B.date))}</h2>
         <div class="slots">${(() => { const u = []; slots.forEach((s) => { if (!u.find((x) => x.start === s.start)) u.push(s); }); return u; })().map((s) => `<button class="slot ${B.slot?.start === s.start ? "selected" : ""}" aria-pressed="${B.slot?.start === s.start}" data-act="bslot" data-s="${s.start}" data-p="${s.provider_id}">${esc(CF.fmtTime(s.start))}${B.provider ? "" : `<small>${esc(s.provider_name.replace("Dr. ", "Dr "))}</small>`}</button>`).join("") || `<p class="muted">${t("no_slots")}</p>`}</div>
       </div>
       <form data-form="staff-book" class="card stack sticky">
         <h2>${t("patient")}</h2>
-        ${CF.field("patient_name", t("full_name"), { required: true, auto: "off" })}
-        ${CF.field("phone", t("phone"), { type: "tel", auto: "off" })}
-        ${CF.field("email", t("email"), { type: "email", auto: "off" })}
-        ${CF.field("reason", t("reason"), { hint: t("no_medical") })}
+        <div class="seg-ctrl patient-mode" role="radiogroup" aria-label="${esc(t("patient"))}">
+          ${["new", "returning"].map((m) => `<button type="button" role="radio" aria-checked="${B.mode === m}" data-act="bmode" data-m="${m}">${I(m === "new" ? "plus" : "user")} ${t("patient_mode_" + m)}</button>`).join("")}</div>
+        ${B.mode === "returning" && !B.patient ? `<div class="field"><label for="bps">${t("lookup_patient")}</label>
+            <input id="bps" type="search" autocomplete="off" value="${esc(B.lookup)}" data-input="bp-search" aria-describedby="bp-matches"/></div>
+          <div id="bp-matches" class="stack patient-matches" aria-live="polite">${patientMatchesHtml()}</div>` : ""}
+        ${B.patient ? `<div class="notice info row between wrap">${I("user")}<span class="grow">${t("returning_selected", { name: `<b>${esc(B.patient.name)}</b>` })}</span>
+          <button type="button" class="btn sm ghost" data-act="new-booking-patient">${t("change")}</button></div>` : ""}
+        ${B.mode === "new" || B.patient ? `
+        ${CF.field("patient_name", t("full_name"), { required: true, value: B.draft.patient_name, auto: "off", attrs: B.patient ? "readonly" : "" })}
+        ${CF.field("phone", t("phone"), { type: "tel", value: B.draft.phone, auto: "off" })}
+        ${CF.field("email", t("email"), { type: "email", value: B.draft.email, auto: "off", hint: B.patient ? t("contact_update_hint") : "" })}
+        ${CF.field("reason", t("reason"), { value: B.draft.reason, hint: t("no_medical") })}` : ""}
         <div class="notice ${B.slot ? "info" : "warn"}">${I("cal")} ${B.slot ? `${esc(CF.relDay(B.slot.start))} · <b>${esc(CF.fmtTime(B.slot.start))}</b> · ${esc(META.providers.find((p) => p.id === B.slot.provider_id)?.name || "")}` : t("pick_slot_first")}</div>
-        <button class="btn primary block" type="submit" ${B.slot ? "" : "disabled"}>${I("check")} ${t("book")}</button></form></div></section>`;
+        <button class="btn primary block" type="submit" ${B.slot && (B.mode === "new" || B.patient) ? "" : "disabled"}>${I("check")} ${t("book")}</button></form></div></section>`;
   } });
-  on("bsrc", (el) => { B.source = el.dataset.s; CF.refresh(); });
-  on("btype", (el) => { B.type = Number(el.dataset.id); B.slot = null; CF.refresh(); });
-  on("bprov", (el) => { B.provider = el.value; B.slot = null; CF.refresh(); });
-  on("bdate", (el) => { B.date = el.value; B.slot = null; CF.refresh(); });
+  on("bsrc", (el) => { keepBookingDraft(); B.source = el.dataset.s; CF.refresh(); });
+  on("btype", (el) => { keepBookingDraft(); B.type = Number(el.dataset.id); B.slot = null; CF.refresh(); });
+  on("bprov", (el) => { keepBookingDraft(); B.provider = el.value; B.slot = null; CF.refresh(); });
+  on("booking-provider-query", (el) => {
+    B.providerQuery = el.value;
+    const select = document.getElementById("bp");
+    if (select) select.innerHTML = bookingProviderOptions();
+  });
+  on("bdate", (el) => { if (!el.value) return; keepBookingDraft(); B.date = el.value; B.slot = null; CF.refresh(); });
   on("bslot", (el) => {
-    const f = document.querySelector('form[data-form="staff-book"]'); const keep = f ? CF.formData(f) : {};
+    keepBookingDraft();
     B.slot = { start: el.dataset.s, provider_id: Number(el.dataset.p) };
-    CF.refresh().then(() => { const g = document.querySelector('form[data-form="staff-book"]'); Object.entries(keep).forEach(([k, v]) => g[k] && (g[k].value = v)); g.patient_name.focus(); });
+    CF.refresh().then(() => (B.mode === "returning" && !B.patient ? document.getElementById("bps") : document.querySelector('form[data-form="staff-book"] input[name="patient_name"]:not([readonly]), form[data-form="staff-book"] input[name="reason"]'))?.focus());
+  });
+  on("returning-patient", () => {
+    CF.modal(t("returning_patient"), `<form data-form="lookup-patient" class="stack">
+      ${CF.field("query", t("lookup_patient"), { type: "search", required: true, attrs: 'minlength="2" autofocus' })}
+      <button class="btn primary" type="submit">${t("search")}</button></form><div class="stack" id="patient-matches" aria-live="polite"></div>`);
+  });
+  onForm("lookup-patient", async (d) => {
+    const { patients } = await api("GET", `/staff/patients?q=${encodeURIComponent(d.query)}`);
+    B.matches = patients;
+    const matches = document.getElementById("patient-matches");
+    if (matches) matches.innerHTML = patients.map((p) => `<button type="button" class="choice" data-act="pick-booking-patient" data-id="${p.id}">
+      <b>${esc(p.name)}</b><span class="small muted">${esc([p.phone, p.email].filter(Boolean).join(" · "))}</span></button>`).join("") || `<p>${t("no_returning_patients")}</p>`;
+  });
+  on("pick-booking-patient", (el) => {
+    const p = B.matches.find((patient) => patient.id === Number(el.dataset.id));
+    if (!p) return;
+    keepBookingDraft();
+    B.patient = p; B.mode = "returning";
+    Object.assign(B.draft, { patient_name: p.name, phone: p.phone || "", email: p.email || "" });
+    if (el.closest(".modal-wrap")) CF.closeModal();
+    CF.refresh().then(() => document.querySelector('form[data-form="staff-book"] input[name="reason"]')?.focus());
+  });
+  on("new-booking-patient", () => {
+    keepBookingDraft();
+    B.patient = null;
+    Object.assign(B.draft, { patient_name: "", phone: "", email: "" });
+    CF.refresh().then(() => document.getElementById("bps")?.focus());
+  });
+  on("bmode", (el) => {
+    if (B.mode === el.dataset.m) return;
+    keepBookingDraft();
+    B.mode = el.dataset.m; B.patient = null; B.matches = []; B.lookup = "";
+    Object.assign(B.draft, { patient_name: "", phone: "", email: "" });
+    CF.refresh().then(() => (B.mode === "returning" ? document.getElementById("bps") : document.querySelector('form[data-form="staff-book"] input[name="patient_name"]'))?.focus());
+  });
+  // Search returning patients as you type (name, phone or email) – results update without leaving the form.
+  let bpT;
+  on("bp-search", (el) => {
+    B.lookup = el.value; clearTimeout(bpT);
+    bpT = setTimeout(async () => {
+      const q = B.lookup.trim();
+      B.matches = q.length >= 2 ? (await api("GET", `/staff/patients?q=${encodeURIComponent(q)}`)).patients : [];
+      if (q !== B.lookup.trim()) return; // a newer search is on its way
+      const box = document.getElementById("bp-matches");
+      if (box) box.innerHTML = patientMatchesHtml();
+    }, 250);
   });
   onForm("staff-book", async (d) => {
     try {
-      const { appointment: a } = await api("POST", "/staff/appointments", { ...d, start: B.slot.start, provider_id: B.slot.provider_id, type_id: B.type, source: B.source });
+      const { appointment: a } = await api("POST", "/staff/appointments", { ...d, patient_record: B.patient?.id, start: B.slot.start, provider_id: B.slot.provider_id, type_id: B.type, source: B.source });
       CF.toast(t("staff_booked", { name: a.patient_name, when: `${CF.relDay(a.start)} ${CF.fmtTime(a.start)}` }));
-      B.slot = null; CF.refresh();
-    } catch (e) { CF.toast(CF.errMsg(e), "err"); B.slot = null; CF.refresh(); }
+      B.slot = null; B.draft = {}; B.patient = null; B.lookup = ""; B.matches = []; CF.refresh();
+    } catch (e) { CF.toast(CF.errMsg(e), "err"); B.slot = null; B.draft = d; CF.refresh(); }
   });
 
   // =====================================================================
@@ -2265,7 +2584,7 @@ window.I18N = {
 
   // ---------- insights ----------
   async function insights(M) {
-    const s = await api("GET", "/admin/stats");
+    const [s, { staff }] = await Promise.all([api("GET", "/admin/stats"), api("GET", "/admin/staff")]);
     const pct = (n) => (s.total ? Math.round((n / s.total) * 100) : 0);
     const bar = (label, n, color) => `<div class="hbar"><span>${label}</span><div><i style="width:${pct(n)}%;background:${color}"></i></div><b>${n} (${pct(n)}%)</b></div>`;
     return `<div class="kpis">
@@ -2276,7 +2595,7 @@ window.I18N = {
       <div class="kpi" style="--c:#C0392B"><b>${s.cancelled}</b><span>${t("cancellations")}</span></div></div>
       <div class="card stack"><h2>${t("how_patients_book")}</h2>${bar(t("src_online"), s.online, "#2F80ED")}${bar(t("src_phone"), s.phone, "#E0A100")}${bar(t("src_in_person"), s.in_person, "#8E44AD")}</div>
       <div class="card"><h2>${t("setup_checklist")}</h2><ul class="checklist">
-        ${[[M.providers.length > 0, "providers", "chk_providers"], [!!M.clinic.photo, "clinic", "chk_photo"], [M.clinic.accepting_online, "clinic", "chk_online"], [true, "staff", "chk_staff"], [true, "templates", "chk_templates"]]
+        ${[[M.providers.some((p) => p.active && p.avail.length), "providers", "chk_providers"], [!!M.clinic.photo, "clinic", "chk_photo"], [M.clinic.accepting_online, "clinic", "chk_online"], [staff.some((u) => u.id !== S.user.id), "staff", "chk_staff"], [M.templates.some((x) => x.reviewed_at), "templates", "chk_templates"]]
           .map(([ok, tab, k]) => `<li class="${ok ? "ok" : ""}">${I(ok ? "check" : "info")} <a href="#/admin?tab=${tab}">${t(k)}</a></li>`).join("")}</ul></div>`;
   }
 
@@ -2334,22 +2653,29 @@ window.I18N = {
   on("del-block", async (el) => { await api("DELETE", `/admin/blocks/${el.dataset.id}`); reload(); });
 
   // ---------- staff & roles ----------
-  async function staff() {
+  async function staff(M) {
     const { staff } = await api("GET", "/admin/staff");
-    const roles = ["reception", "nurse", "admin"];
+    const roles = ["reception", "nurse", "practitioner", "admin"];
+    const roleOptions = (selected) => roles.map((role) => `<option value="${role}" ${role === selected ? "selected" : ""}>${t("role_" + role)}</option>`).join("");
+    const providers = (selected) => `<option value="">${t("none")}</option>` + M.providers.filter((p) => p.active || p.id === selected)
+      .map((p) => `<option value="${p.id}" ${p.id === selected ? "selected" : ""}>${esc(p.name)}</option>`).join("");
     return `<div class="card"><h2>${t("staff_roles")}</h2><p class="hint">${t("staff_roles_d")}</p>
       <div class="table-wrap"><table class="table"><thead><tr><th>${t("full_name")}</th><th>${t("email")}</th><th>${t("role")}</th><th><span class="sr-only">${t("actions")}</span></th></tr></thead><tbody>
       ${staff.map((u) => `<tr><td><b>${esc(u.first_name)} ${esc(u.last_name)}</b>${u.id === S.user.id ? ` <span class="muted small">(${t("you")})</span>` : ""}</td><td>${esc(u.email)}</td>
-        <td><label class="sr-only" for="r${u.id}">${t("role")}</label><select id="r${u.id}" data-change="set-role" data-id="${u.id}" ${u.id === S.user.id ? "disabled" : ""}>${roles.map((r) => `<option value="${r}" ${u.staff_role === r ? "selected" : ""}>${t("role_" + r)}</option>`).join("")}</select></td>
+        <td>${u.id === S.user.id ? t("role_admin") : `<form data-form="set-role" data-id="${u.id}" class="stack">
+          <label class="sr-only" for="r${u.id}">${t("role")}</label><select id="r${u.id}" name="staff_role">${roleOptions(u.staff_role)}</select>
+          <label for="staff-provider-${u.id}" class="small">${t("staff_provider")}</label><select id="staff-provider-${u.id}" name="provider_id">${providers(u.provider_id)}</select>
+          <button class="btn sm" type="submit">${t("save")}</button></form>`}</td>
         <td>${u.id === S.user.id ? "" : `<button class="btn sm ghost danger-text" data-act="del-staff" data-id="${u.id}" aria-label="${esc(t("remove") + " " + u.first_name)}">${I("trash")}</button>`}</td></tr>`).join("")}</tbody></table></div>
       <dl class="role-help">${roles.map((r) => `<div><dt>${t("role_" + r)}</dt><dd>${t("role_" + r + "_d")}</dd></div>`).join("")}</dl></div>
       <form data-form="adm-staff" class="card stack"><h2>${I("plus")} ${t("add_staff")}</h2>
         <div class="grid2">${CF.field("first_name", t("first_name"), { required: true })}${CF.field("last_name", t("last_name"))}</div>
         <div class="grid2">${CF.field("email", t("email"), { type: "email", required: true, auto: "off" })}${CF.field("password", t("temp_password"), { type: "text", required: true, attrs: 'minlength="8"', hint: t("temp_password_hint") })}</div>
-        <div class="field"><label for="nsr">${t("role")}</label><select id="nsr" name="staff_role">${roles.map((r) => `<option value="${r}">${t("role_" + r)}</option>`).join("")}</select></div>
+        <div class="grid2"><div class="field"><label for="nsr">${t("role")}</label><select id="nsr" name="staff_role">${roleOptions("reception")}</select></div>
+          <div class="field"><label for="new-staff-provider">${t("staff_provider")}</label><select id="new-staff-provider" name="provider_id">${providers()}</select></div></div>
         <button class="btn primary" type="submit">${t("add_staff")}</button></form>`;
   }
-  on("set-role", async (el) => { await api("PATCH", `/admin/staff/${el.dataset.id}`, { staff_role: el.value }); CF.toast(t("saved")); });
+  onForm("set-role", async (d, form) => { await api("PATCH", `/admin/staff/${form.dataset.id}`, d); CF.toast(t("saved")); reload(); });
   on("del-staff", async (el) => { if (await CF.confirm(t("remove_staff_q"), { danger: true, ok: t("remove") })) { await api("DELETE", `/admin/staff/${el.dataset.id}`); reload(); } });
   onForm("adm-staff", async (d) => { await api("POST", "/admin/staff", d); CF.toast(t("staff_added")); reload(); });
 
