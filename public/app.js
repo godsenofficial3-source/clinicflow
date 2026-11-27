@@ -228,7 +228,11 @@
       main.innerHTML = html;
       document.title = `${t(def.title)} · ClinicFlow`;
       def.after && def.after(main);
-      if (!opts.quiet) { main.focus({ preventScroll: true }); window.scrollTo(0, 0); CF.announce(t(def.title)); }
+      if (!opts.quiet) {
+        // replay the page-header "sign settles" animation only when a page is opened, not on live refreshes
+        main.classList.remove("enter"); void main.offsetWidth; main.classList.add("enter");
+        main.focus({ preventScroll: true }); window.scrollTo(0, 0); CF.announce(t(def.title));
+      }
     } catch (e) {
       if (e.message !== "auth") main.innerHTML = `<div class="card">${CF.empty("alert", CF.errMsg(e))}</div>`;
     } finally { main.removeAttribute("aria-busy"); }
